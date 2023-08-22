@@ -87,6 +87,7 @@ class ScheduleEdit extends React.Component {
       const { schedule } = this.state;
       this.setState({ isLoading: true });
       await this.scheduleService.add(schedule);
+      // TODO: Save AKS cluster information
       this.setState({ isLoading: false });
       history.push('/schedules/browser');
     } catch (error) {
@@ -170,6 +171,33 @@ class ScheduleEdit extends React.Component {
                 value={schedule.displayname}
                 label="Schedule Display-Name"
                 onChange={this.handleChange('displayname')}
+                margin="none"
+              />
+              
+              <TextField
+                id="aks-cluster-name"
+                className={classes.textField}
+                value={schedule.aksClusterName}
+                label="AKS Cluster Name"
+                onChange={this.handleChange('aksClusterName')}
+                margin="none"
+              />
+              
+              <TextField
+                id="aks-cluster-region"
+                className={classes.textField}
+                value={schedule.aksClusterRegion}
+                label="AKS Cluster Region"
+                onChange={this.handleChange('aksClusterRegion')}
+                margin="none"
+              />
+              
+              <TextField
+                id="aks-cluster-node-count"
+                className={classes.textField}
+                value={schedule.aksClusterNodeCount}
+                label="AKS Cluster Node Count"
+                onChange={this.handleChange('aksClusterNodeCount')}
                 margin="none"
               />
 
