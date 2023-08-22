@@ -19,6 +19,10 @@ type GoryaServiceHandler interface {
 	DeletePolicy(ctx context.Context) http.Handler
 	ChangeState(ctx context.Context) http.Handler
 	ScheduleTask(ctx context.Context) http.Handler
+	// Placeholder methods for GCE
+	StartGCEInstance(ctx context.Context) http.Handler
+	StopGCEInstance(ctx context.Context) http.Handler
+	ListGCEInstances(ctx context.Context) http.Handler
 }
 
 const (
@@ -41,7 +45,7 @@ const (
 //	path on which to mount the handler and the handler itself.
 //
 //	 https://stackoverflow.com/questions/33646948/go-using-mux-router-how-to-pass-my-db-to-my-handlers
-func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc GoryaServiceHandler) (string,
+func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc GoryaServiceHandler, gceClient *gce.GCEClient) (string,
 	http.Handler) {
 	mux := http.NewServeMux()
 	mux.Handle(GoryaGetTimeZoneProcedure, svc.GetTimeZone())
