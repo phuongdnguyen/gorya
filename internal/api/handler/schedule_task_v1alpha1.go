@@ -20,48 +20,67 @@ func ScheduleTaskV1alpha1(ctx context.Context, store store.Interface,
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		for _, policy := range *policies {
-			schedule, err := store.GetSchedule(policy.ScheduleName)
-			if err == gorm.ErrRecordNotFound {
-				w.WriteHeader(http.StatusNotFound)
-				return
-			}
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			location, err := time.LoadLocation(schedule.TimeZone)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			nowInTargetLocation := time.Now().In(location)
-			day, hour := timezone.ConvertTimeToIndex(nowInTargetLocation)
-			var arr []int
-			for _, v := range schedule.Schedule.Data().NdArray {
-				arr = append(arr, v...)
-			}
-			matrixSize := schedule.Schedule.Data().Shape[0] * schedule.Schedule.Data().Shape[1]
-			prevIdx := getPreviousIdx(day*24+hour, matrixSize)
-			now := arr[day*24+hour]
-			prev := arr[prevIdx]
-			if now != prev {
-				for _, tag := range policy.Tags {
-					for k, v := range tag {
-						for _, project := range policy.Projects {
-							e := worker.QueueElem{
-								RequestURI: v1alpha1.GoryaTaskChangeStageProcedure,
-								Project:    project,
-								TagKey:     k,
-								TagValue:   v,
-								Action:     now,
-							}
-							taskProcessor.Dispatch(ctx, &e)
-						}
-					}
-				}
-			}
-		}
+  for _, policy := range *policies {
+  	if policy.Type == "EKS" {
+  		// Implement the logic to schedule compute units for EKS
+  		for _, tag := range policy.Tags {
+  			for k, v := range tag {
+  				for _, project := range policy.Projects {
+  					e := worker.QueueElem{
+  						RequestURI: v1alpha1.GoryaTaskChangeStageProcedure,
+  						Project:    project,
+  						TagKey:     k,
+  						TagValue:   v,
+  						Action:     now,
+  						// Add necessary parameters for EKS
+  					}
+  					taskProcessor.Dispatch(ctx, &e)
+  				}
+  			}
+  		}
+  	} else {
+  		schedule, err := store.GetSchedule(policy.ScheduleName)
+  		if err == gorm.ErrRecordNotFound {
+  			w.WriteHeader(http.StatusNotFound)
+  			return
+  		}
+  		if err != nil {
+  			http.Error(w, err.Error(), http.StatusInternalServerError)
+  			return
+  		}
+  		location, err := time.LoadLocation(schedule.TimeZone)
+  		if err != nil {
+  			http.Error(w, err.Error(), http.StatusInternalServerError)
+  			return
+  		}
+  		nowInTargetLocation := time.Now().In(location)
+  		day, hour := timezone.ConvertTimeToIndex(nowInTargetLocation)
+  		var arr []int
+  		for _, v := range schedule.Schedule.Data().NdArray {
+  			arr = append(arr, v...)
+  		}
+  		matrixSize := schedule.Schedule.Data().Shape[0] * schedule.Schedule.Data().Shape[1]
+  		prevIdx := getPreviousIdx(day*24+hour, matrixSize)
+  		now := arr[day*24+hour]
+  		prev := arr[prevIdx]
+  		if now != prev {
+  			for _, tag := range policy.Tags {
+  				for k, v := range tag {
+  					for _, project := range policy.Projects {
+  						e := worker.QueueElem{
+  							RequestURI: v1alpha1.GoryaTaskChangeStageProcedure,
+  							Project:    project,
+  							TagKey:     k,
+  							TagValue:   v,
+  							Action:     now,
+  						}
+  						taskProcessor.Dispatch(ctx, &e)
+  					}
+  				}
+  			}
+  		}
+  	}
+  }
 	}
 }
 
