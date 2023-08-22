@@ -8,6 +8,7 @@ import (
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
 )
 
+//go:generate mockery --name Interface --output fake --outpkg fake
 type Interface interface {
 	Process(ctx context.Context, resultChan chan<- string, errChan chan<- error)
 	Dispatch(ctx context.Context, e *QueueElem) error
