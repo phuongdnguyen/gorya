@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/aws/aws-sdk-go-v2/config v1.18.35
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.113.1
+	github.com/Azure/azure-sdk-for-go v60.0.0+incompatible
 	github.com/bufbuild/connect-go v1.10.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/kelseyhightower/envconfig v1.4.0
