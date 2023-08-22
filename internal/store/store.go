@@ -14,4 +14,6 @@ type Interface interface {
 	GetSchedule(name string) (*models.ScheduleModel, error)
 	ListSchedule() (*[]models.ScheduleModel, error)
 	DeleteSchedule(name string) error
+	SaveAKSCluster(cluster azure.AKSCluster) error
+	GetAKSCluster(name string) (*azure.AKSCluster, error)
 }
