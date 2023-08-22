@@ -29,22 +29,29 @@ func GetOnce() (Interface, error) {
 	user := os.GetEnv("GORYA_DB_USER", "root")
 	password := os.GetEnv("GORYA_DB_PASSWORD", "root")
 	dbName := os.GetEnv("GORYA_DB_NAME", "gorya")
-	switch dbType {
-	case "mysql":
-		db, err := NewMySQLDB(host, user, password, dbName)
-		if err != nil {
-			return nil, err
-		}
-		store := New(db)
-		return store, nil
-	default:
-		db, err := NewSqliteDB()
-		if err != nil {
-			return nil, err
-		}
-		store := New(db)
-		return store, nil
-	}
+ switch dbType {
+ case "mysql":
+ 	db, err := NewMySQLDB(host, user, password, dbName)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	store := New(db)
+ 	return store, nil
+ case "cloudsql":
+ 	db, err := NewCloudSQLDB(host, user, password, dbName)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	store := New(db)
+ 	return store, nil
+ default:
+ 	db, err := NewSqliteDB()
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	store := New(db)
+ 	return store, nil
+ }
 }
 
 func New(db *gorm.DB) Interface {
