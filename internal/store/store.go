@@ -4,6 +4,7 @@ import (
 	"github.com/nduyphuong/gorya/internal/models"
 )
 
+//go:generate mockery --name Interface --output fake --outpkg fake
 type Interface interface {
 	SavePolicy(policy models.Policy) error
 	GetPolicyByName(name string) (*models.Policy, error)
