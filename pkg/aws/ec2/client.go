@@ -11,6 +11,7 @@ import (
 	"github.com/nduyphuong/gorya/pkg/aws/options"
 )
 
+//go:generate mockery --name Interface --output fake --outpkg fake
 type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }

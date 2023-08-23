@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+//go:generate mockery --name GoryaServiceHandler --output fake --outpkg fake
 type GoryaServiceHandler interface {
 	GetTimeZone() http.Handler
 	GetVersionInfo() http.Handler
