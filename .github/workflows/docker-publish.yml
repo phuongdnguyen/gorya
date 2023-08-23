@@ -31,7 +31,8 @@ jobs:
               password: ${{secrets.GH_PAT}}
           - name: 'Build Backend Image'
             run: |
-              docker build -f backend.Dockerfile . --tag ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }}
+              docker build --build-arg VERSION=${{ env.IMAGE_TAG }} --build-arg GIT_COMMIT=${{ github.sha }} --build-arg GIT_TREE_STATE=clean -f backend.Dockerfile . --tag ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }} 
+
               docker push ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }}
   ui_image_publish:
     runs-on: "ubuntu-20.04"
