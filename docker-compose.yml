@@ -46,6 +46,7 @@ services:
       GORYA_DB_TYPE: mysql
       GORYA_REDIS_ADDR: redis:6379
       GORYA_QUEUE_NAME: gorya
+      AWS_ENDPOINT: http://localstack:4566
     depends_on:
       redis:
         condition: service_healthy
@@ -69,7 +70,21 @@ services:
       - gorya-backend
     networks:
       - gorya
-
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-gorya_localstack}"
+    image: localstack/localstack-pro
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      - DEBUG=${DEBUG-}
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - gorya
 networks:
   gorya:
     driver: bridge

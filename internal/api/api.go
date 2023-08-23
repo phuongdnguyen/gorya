@@ -2,6 +2,10 @@ package api
 
 import (
 	"context"
+	"net"
+	"net/http"
+	"time"
+
 	"github.com/nduyphuong/gorya/internal/api/config"
 	"github.com/nduyphuong/gorya/internal/api/handler"
 	"github.com/nduyphuong/gorya/internal/logging"
@@ -12,12 +16,10 @@ import (
 	"github.com/nduyphuong/gorya/internal/worker"
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"github.com/nduyphuong/gorya/pkg/aws"
+	awsOptions "github.com/nduyphuong/gorya/pkg/aws/options"
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-	"net"
-	"net/http"
-	"time"
 )
 
 type Server interface {
@@ -43,15 +45,19 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	log := logging.LoggerFromContext(ctx)
 	log.Infof("Server is listening on %q", l.Addr().String())
 	mux := http.NewServeMux()
-	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello, world!"))
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Ok"))
 	})
 	s.sc, err = store.GetOnce()
 	if err != nil {
 		return err
 	}
 	awsRegion := os.GetEnv("AWS_REGION", "ap-southeast-1")
-	s.aws, err = aws.New(ctx, awsRegion)
+	awsEndpoint := os.GetEnv("AWS_ENDPOINT", "")
+	s.aws, err = aws.New(ctx,
+		awsOptions.WithRegion(awsRegion),
+		awsOptions.WithEndpoint(awsEndpoint),
+	)
 	if err != nil {
 		return err
 	}
