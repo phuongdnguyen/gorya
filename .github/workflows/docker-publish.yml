@@ -15,7 +15,7 @@ on:
 jobs:
   backend_image_publish:
     runs-on: "ubuntu-20.04"
-    if: ${{ inputs.SERVICE_NAME }} == "gorya-backend"
+    if: ${{ inputs.SERVICE_NAME == 'gorya-backend' }}
     env:
       SERVICE_NAME: ${{ inputs.SERVICE_NAME }}
       IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
@@ -36,7 +36,7 @@ jobs:
               docker push ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }}
   ui_image_publish:
     runs-on: "ubuntu-20.04"
-    if: ${{ inputs.SERVICE_NAME }} == "gorya-ui"
+    if: ${{ inputs.SERVICE_NAME == 'gorya-ui' }}
     env:
       SERVICE_NAME: ${{ inputs.SERVICE_NAME }}
       IMAGE_TAG: ${{ inputs.IMAGE_TAG }}
