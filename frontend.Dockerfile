@@ -1,5 +1,9 @@
 # pull official base image
 FROM node:current-alpine3.18
+ARG GH_ACTOR=nduyphuong
+ARG GH_REPO=gorya
+LABEL org.opencontainers.image.source https://github.com/${GH_ACTOR}/${GH_REPO}
+LABEL org.opencontainers.image.licenses MIT
 
 ENV NODE_OPTIONS=--openssl-legacy-provider
 # set working directory
