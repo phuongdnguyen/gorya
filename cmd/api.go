@@ -64,6 +64,7 @@ func newServerCommand() *cobra.Command {
 			//process result from channel
 			go func() {
 				for task := range taskProcessResultChan {
+					log.Infof("popped item %v", task)
 					var elem worker.QueueElem
 					err := json.Unmarshal([]byte(task), &elem)
 					if err != nil {
@@ -89,9 +90,12 @@ func newServerCommand() *cobra.Command {
 						return
 					}
 					req.Header.Set("Content-Type", "application/json")
-					_, err = http.DefaultClient.Do(req)
+					resp, err := http.DefaultClient.Do(req)
 					if err != nil {
 						log.Errorf("making request %v", err)
+					}
+					if resp.StatusCode != http.StatusOK {
+						log.Errorf("change state request failed with status code: %v", resp.StatusCode)
 					}
 				}
 			}()

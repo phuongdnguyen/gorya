@@ -18,6 +18,7 @@ func main() {
 	dispatch := flag.Bool("dispatch", true, "run dispatcher")
 	process := flag.Bool("process", true, "run processor")
 	queueName := flag.String("queueName", "", "queue name")
+	action := flag.Int("action", 0, "start/stop action")
 	flag.Parse()
 	if *queueName == "" {
 		fmt.Println("nothing to do")
@@ -33,13 +34,13 @@ func main() {
 	})
 	numWorkers := 10
 	var input []worker.QueueElem
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 1; i++ {
 		input = append(input, worker.QueueElem{
 			RequestURI: "/tasks/change_state",
 			Project:    "test-aws-account",
-			TagKey:     "phuong",
-			TagValue:   "test",
-			Action:     1,
+			TagKey:     "foo",
+			TagValue:   "bar",
+			Action:     *action,
 		})
 	}
 	if *dispatch {

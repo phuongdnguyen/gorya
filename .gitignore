@@ -135,3 +135,5 @@ sketch
 # Build folder
 build
 app
+volume
+.env
