@@ -1,14 +1,16 @@
 name: Build and publish a Docker image to ghcr.io
 
 on:
-  workflow_call:
+  workflow_dispatch:
     inputs:
       SERVICE_NAME:
         required: true
         type: string
+        description: "service name to release: gorya-backend || gorya-ui"
       IMAGE_TAG:
         required: true
         type: string
+        description: "tag for container image"
 
 jobs:
   backend_image_publish:
@@ -27,7 +29,7 @@ jobs:
               registry: ghcr.io
               username: ${{github.actor}}
               password: ${{secrets.GH_PAT}}
-          - name: 'Build Inventory Image'
+          - name: 'Build Backend Image'
             run: |
               docker build -f backend.Dockerfile . --tag ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }}
               docker push ghcr.io/${{github.actor}}/gorya-backend:${{ env.IMAGE_TAG }}
@@ -47,7 +49,7 @@ jobs:
           registry: ghcr.io
           username: ${{github.actor}}
           password: ${{secrets.GH_PAT}}
-      - name: 'Build Inventory Image'
+      - name: 'Build UI Image'
         run: |
           docker build -f frontend.Dockerfile . --tag ghcr.io/${{github.actor}}/gorya-ui:${{ env.IMAGE_TAG }}
           docker push ghcr.io/${{github.actor}}/gorya-ui:${{ env.IMAGE_TAG }}   
