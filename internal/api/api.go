@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/nduyphuong/gorya/internal/api/config"
@@ -22,6 +23,11 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
+const (
+	PROVIDER_AWS = "aws"
+	PROVIDER_GCP = "gcp"
+)
+
 type Server interface {
 	Serve(ctx context.Context, l net.Listener) error
 }
@@ -29,7 +35,7 @@ type Server interface {
 type server struct {
 	cfg           config.ServerConfig
 	sc            store.Interface
-	aws           aws.Interface
+	aws           *aws.AwsPool
 	taskProcessor worker.Interface
 }
 
@@ -37,6 +43,11 @@ func NewServer(cfg config.ServerConfig) (Server, error) {
 	return &server{
 		cfg: cfg,
 	}, nil
+}
+
+type CredentialRef struct {
+	credentialRef map[string]bool
+	lock          sync.Mutex
 }
 
 func (s *server) Serve(ctx context.Context, l net.Listener) error {
@@ -52,15 +63,51 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	if err != nil {
 		return err
 	}
-	awsRegion := os.GetEnv("AWS_REGION", "ap-southeast-1")
-	awsEndpoint := os.GetEnv("AWS_ENDPOINT", "")
-	s.aws, err = aws.New(ctx,
-		awsOptions.WithRegion(awsRegion),
-		awsOptions.WithEndpoint(awsEndpoint),
-	)
-	if err != nil {
-		return err
+	//TODO: change to sync map
+
+	c := CredentialRef{}
+	c.credentialRef = map[string]bool{}
+	c.credentialRef[aws.Default] = true
+	awsPool := aws.AwsPool{}
+	ticker := time.NewTicker(30 * time.Second)
+	updateAWSClientPool := func() {
+		c.lock.Lock()
+		defer c.lock.Unlock()
+		policies, err := s.sc.ListPolicyByProvider(PROVIDER_AWS)
+		for _, pol := range *policies {
+			for _, project := range pol.Projects {
+				if project.CredentialRef != "" {
+					c.credentialRef[project.CredentialRef] = true
+				}
+			}
+		}
+		//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
+		s.aws, err = awsPool.New(
+			ctx,
+			c.credentialRef,
+			//currently we only support multi account in 1 region
+			awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
+			awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
+		)
+		if err != nil {
+			log.Errorf("update aws client pool %v", err)
+			return
+		}
 	}
+	//we update client pool for the first time then periodically update it every ticker.C seconds
+	updateAWSClientPool()
+	go func(stop <-chan struct{}) {
+		for {
+			select {
+			case <-stop:
+				return
+			case <-ticker.C:
+				updateAWSClientPool()
+			}
+		}
+
+	}(ctx.Done())
+
 	s.taskProcessor = worker.NewClient(worker.Options{
 		QueueOpts: queueOptions.Options{
 			Addr:        os.GetEnv("GORYA_REDIS_ADDR", "localhost:6379"),

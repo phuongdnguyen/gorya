@@ -10,6 +10,7 @@ import (
 
 //go:generate mockery --name Interface
 type Interface interface {
+	// Process periodically check if there is any item in the queue that needs to be processed
 	Process(ctx context.Context, resultChan chan<- string, errChan chan<- error)
 	Dispatch(ctx context.Context, e *QueueElem) error
 }
@@ -23,11 +24,11 @@ type Options struct {
 }
 
 type QueueElem struct {
-	RequestURI string `json:"relative_uri"`
-	Project    string `json:"project"`
-	TagKey     string `json:"tagkey"`
-	TagValue   string `json:"tagvalue"`
-	Action     int    `json:"action"`
+	Project       string `json:"project"`
+	CredentialRef string `json:"credentialref"`
+	TagKey        string `json:"tagkey"`
+	TagValue      string `json:"tagvalue"`
+	Action        int    `json:"action"`
 }
 
 func NewClient(opts Options) Interface {
@@ -52,6 +53,7 @@ func (c *client) Dispatch(ctx context.Context, e *QueueElem) error {
 	return nil
 }
 
+// Process periodically check if there is any item in the queue that needs to be processed
 func (c *client) Process(ctx context.Context, resultChan chan<- string, errChan chan<- error) {
 	c.queue.Dequeue(ctx, resultChan, errChan)
 }

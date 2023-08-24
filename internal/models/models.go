@@ -22,7 +22,14 @@ type Schedule struct {
 type Policy struct {
 	Name         string                                 `gorm:"size:191;unique" json:"name"`
 	DisplayName  string                                 `json:"displayname"`
-	Projects     datatypes.JSONSlice[string]            `json:"projects"`
+	Projects     datatypes.JSONSlice[Project]           `json:"projects"`
 	Tags         datatypes.JSONSlice[map[string]string] `json:"tags"`
 	ScheduleName string                                 `json:"schedulename"`
+	Schedule     ScheduleModel                          `gorm:"foreignKey:ScheduleName;references:Name"`
+	Provider     string                                 `json:"provider,omitempty"`
+}
+
+type Project struct {
+	Name          string `json:"name"`
+	CredentialRef string `json:"credentialRef"`
 }

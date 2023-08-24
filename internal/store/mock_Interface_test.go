@@ -319,6 +319,60 @@ func (_c *MockInterface_ListPolicy_Call) RunAndReturn(run func() (*[]models.Poli
 	return _c
 }
 
+// ListPolicyByProvider provides a mock function with given fields: name
+func (_m *MockInterface) ListPolicyByProvider(name string) (*[]models.Policy, error) {
+	ret := _m.Called(name)
+
+	var r0 *[]models.Policy
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*[]models.Policy, error)); ok {
+		return rf(name)
+	}
+	if rf, ok := ret.Get(0).(func(string) *[]models.Policy); ok {
+		r0 = rf(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*[]models.Policy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockInterface_ListPolicyByProvider_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPolicyByProvider'
+type MockInterface_ListPolicyByProvider_Call struct {
+	*mock.Call
+}
+
+// ListPolicyByProvider is a helper method to define mock.On call
+//   - name string
+func (_e *MockInterface_Expecter) ListPolicyByProvider(name interface{}) *MockInterface_ListPolicyByProvider_Call {
+	return &MockInterface_ListPolicyByProvider_Call{Call: _e.mock.On("ListPolicyByProvider", name)}
+}
+
+func (_c *MockInterface_ListPolicyByProvider_Call) Run(run func(name string)) *MockInterface_ListPolicyByProvider_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockInterface_ListPolicyByProvider_Call) Return(_a0 *[]models.Policy, _a1 error) *MockInterface_ListPolicyByProvider_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockInterface_ListPolicyByProvider_Call) RunAndReturn(run func(string) (*[]models.Policy, error)) *MockInterface_ListPolicyByProvider_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListSchedule provides a mock function with given fields:
 func (_m *MockInterface) ListSchedule() (*[]models.ScheduleModel, error) {
 	ret := _m.Called()
