@@ -34,15 +34,19 @@ func main() {
 	})
 	numWorkers := 10
 	var input []worker.QueueElem
-	for i := 0; i < 1; i++ {
-		input = append(input, worker.QueueElem{
-			RequestURI: "/tasks/change_state",
-			Project:    "test-aws-account",
-			TagKey:     "foo",
-			TagValue:   "bar",
-			Action:     *action,
-		})
-	}
+	input = append(input, worker.QueueElem{
+		Project:       "test-aws-account",
+		TagKey:        "foo",
+		TagValue:      "bar",
+		Action:        *action,
+		CredentialRef: "arn:aws:iam::043159268388:role/test",
+	})
+	input = append(input, worker.QueueElem{
+		Project:  "test-aws-account",
+		TagKey:   "foo",
+		TagValue: "bar",
+		Action:   *action,
+	})
 	if *dispatch {
 		for _, v := range input {
 			if err := w.Dispatch(ctx, &v); err != nil {

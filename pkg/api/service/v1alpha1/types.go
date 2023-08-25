@@ -38,12 +38,11 @@ type AddScheduleRequest struct {
 }
 
 type AddPolicyRequest struct {
-	Name        string              `json:"name"`
-	DisplayName string              `json:"displayname,omitempty"`
-	Tags        []map[string]string `json:"tags"`
-	//compatible with front-end logic
-	Projects     []string `json:"projects"`
-	ScheduleName string   `json:"schedulename"`
+	Name         string              `json:"name"`
+	DisplayName  string              `json:"displayname,omitempty"`
+	Tags         []map[string]string `json:"tags"`
+	Projects     []models.Project    `json:"projects"`
+	ScheduleName string              `json:"schedulename"`
 }
 
 type GetScheduleResponse struct {
@@ -71,8 +70,9 @@ type GetPolicyResponse struct {
 }
 
 type ChangeStateRequest struct {
-	Action   int    `json:"action"`
-	Project  string `json:"project"`
-	TagKey   string `json:"tagkey"`
-	TagValue string `json:"tagvalue"`
+	Action        int    `json:"action"`
+	Project       string `json:"project"`
+	CredentialRef string `json:"credentialRef"`
+	TagKey        string `json:"tagkey"`
+	TagValue      string `json:"tagvalue"`
 }

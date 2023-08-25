@@ -10,6 +10,7 @@ type Interface interface {
 	GetPolicyByName(name string) (*models.Policy, error)
 	GetPolicyBySchedule(name string) (*[]models.Policy, error)
 	ListPolicy() (*[]models.Policy, error)
+	ListPolicyByProvider(name string) (*[]models.Policy, error)
 	DeletePolicy(name string) error
 	SaveSchedule(schedule models.ScheduleModel) error
 	GetSchedule(name string) (*models.ScheduleModel, error)

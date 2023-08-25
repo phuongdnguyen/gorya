@@ -20,6 +20,7 @@ import forOwn from 'lodash/forOwn';
 
 // Project
 import PolicyTags from '../../modules/components/PolicyTags';
+import PolicyProjects from '../../modules/components/PolicyProjects';
 import AppPageContent from '../../modules/components/AppPageContent';
 import AppPageActions from '../../modules/components/AppPageActions';
 import PolicyService from '../../modules/api/policy';
@@ -54,7 +55,7 @@ class Policy extends React.Component {
 
       nameError: false,
       scheduleError: false,
-      projectsError: false,
+      projectsError: [],
       tagsError: [],
 
       showBackendError: false,
@@ -115,12 +116,10 @@ class Policy extends React.Component {
     }
   };
 
-  handleChangeProjects = (event) => {
+  handleChangeProjects = (projects) => {
     const { policy } = this.state;
-    policy.projects = event.target.value.replace(/\s/g, '').split(',');
-    this.setState({
-      policy,
-    });
+    policy.projects = projects;
+    this.setState({ policy });
   };
 
   getTagsError = () => {
@@ -143,16 +142,27 @@ class Policy extends React.Component {
     return tagsError;
   };
 
+  getProjectsError = () => {
+    const { policy } = this.state;
+    let projectsError = [];
+    const projectsRe = /^[a-z][a-z0-9-]+[a-z0-9]$/;
+    for (let i = 0; i < policy.projects.length && !projectsError; i++) {
+      if (!projectsRe.test(policy.projects[i].name)) {
+        projectsError[i][0] = true;
+      }
+    }
+    return projectsError;
+  };
+
   handleSubmit = async (event) => {
     try {
       const { history } = this.props;
       const { policy } = this.state;
 
       const nameRe = /^[a-zA-Z][\w-]*[a-zA-Z0-9]$/;
-      const projectsRe = /^[a-z][a-z0-9-]+[a-z0-9]$/;
 
       let nameError = false;
-      let projectsError = !policy.projects.length;
+      let projectsError = this.getProjectsError();
       const scheduleError = !policy.schedulename;
       const tagsError = this.getTagsError();
 
@@ -160,17 +170,14 @@ class Policy extends React.Component {
         nameError = true;
       }
 
-      for (let i = 0; i < policy.projects.length && !projectsError; i++) {
-        if (!projectsRe.test(policy.projects[i])) {
-          projectsError = true;
-        }
-      }
-
       if (
         nameError ||
-        projectsError ||
         scheduleError ||
-        find(tagsError, (tagErrors) => tagErrors[0] || tagErrors[1])
+        find(tagsError, (tagErrors) => tagErrors[0] || tagErrors[1]) ||
+        find(
+          projectsError,
+          (projectsError) => projectsError[0] || projectsError[1]
+        )
       ) {
         this.setState({
           nameError,
@@ -317,24 +324,15 @@ class Policy extends React.Component {
                   </Select>
                 </FormControl>
 
-                <TextField
-                  id="projects-list"
-                  error={projectsError}
-                  helperText="Separated by comma"
-                  label="Projects"
-                  className={classes.textField}
-                  value={policy.projects.join(',')}
-                  onChange={this.handleChangeProjects}
-                  margin="none"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-
                 <PolicyTags
                   error={tagsError}
                   tags={policy.tags}
                   onChange={this.handleChangeTags}
+                />
+                <PolicyProjects
+                  error={projectsError}
+                  projects={policy.projects}
+                  onChange={this.handleChangeProjects}
                 />
               </FormGroup>
 

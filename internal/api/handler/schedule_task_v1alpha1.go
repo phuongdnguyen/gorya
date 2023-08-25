@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/nduyphuong/gorya/internal/store"
 	"github.com/nduyphuong/gorya/internal/worker"
-	"github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"github.com/nduyphuong/gorya/pkg/timezone"
 	"gorm.io/gorm"
 	"net/http"
@@ -50,11 +49,11 @@ func ScheduleTaskV1alpha1(ctx context.Context, store store.Interface,
 					for k, v := range tag {
 						for _, project := range policy.Projects {
 							e := worker.QueueElem{
-								RequestURI: v1alpha1.GoryaTaskChangeStageProcedure,
-								Project:    project,
-								TagKey:     k,
-								TagValue:   v,
-								Action:     now,
+								Project:       project.Name,
+								CredentialRef: project.CredentialRef,
+								TagKey:        k,
+								TagValue:      v,
+								Action:        now,
 							}
 							taskProcessor.Dispatch(ctx, &e)
 						}

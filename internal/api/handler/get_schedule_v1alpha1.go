@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/nduyphuong/gorya/internal/store"
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"gorm.io/gorm"
@@ -16,13 +17,13 @@ func GetScheduleV1alpha1(ctx context.Context, store store.Interface) http.Handle
 	return func(w http.ResponseWriter, req *http.Request) {
 		name := req.URL.Query().Get("schedule")
 		if isEmpty(name) {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, errors.New("empty schedule name").Error(), http.StatusBadRequest)
 			return
 		}
 		schedule, err := store.GetSchedule(name)
 		if err != nil {
 			if err != gorm.ErrRecordNotFound {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.WriteHeader(http.StatusNotFound)
@@ -38,7 +39,7 @@ func GetScheduleV1alpha1(ctx context.Context, store store.Interface) http.Handle
 		}
 		b, err := json.Marshal(resp)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(b)

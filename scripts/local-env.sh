@@ -6,3 +6,4 @@
       export GORYA_QUEUE_NAME=gorya
       export AWS_ENDPOINT=http://localhost:4566
       export AWS_REGION=ap-southeast-1
+      export NODE_OPTIONS=--openssl-legacy-provider

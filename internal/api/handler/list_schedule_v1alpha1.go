@@ -18,7 +18,7 @@ func ListScheduleV1alpha1(ctx context.Context, store store.Interface) http.Handl
 		}
 		schedules, err := store.ListSchedule()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if verbose {
@@ -32,7 +32,7 @@ func ListScheduleV1alpha1(ctx context.Context, store store.Interface) http.Handl
 			}
 			b, err := json.Marshal(resp)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.Write(b)
@@ -43,7 +43,7 @@ func ListScheduleV1alpha1(ctx context.Context, store store.Interface) http.Handl
 			}
 			b, err := json.Marshal(resp)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.Write(b)

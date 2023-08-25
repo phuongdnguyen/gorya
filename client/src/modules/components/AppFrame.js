@@ -136,7 +136,7 @@ class AppFrame extends React.Component {
     const drawer = (
       <div>
         <div className={classes.drawerHeader}>
-          <img src={logo} alt="Gorya" />
+          <img src={logo} alt="Gorya" width="300" />
         </div>
         <Divider />
         <List dense disablePadding>

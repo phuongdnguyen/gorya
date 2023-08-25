@@ -11,7 +11,6 @@ import ClearIcon from '@material-ui/icons/Clear';
 
 // Lodash
 import map from 'lodash/map';
-import forOwn from 'lodash/forOwn';
 
 const TEXT_FIELD_WIDTH = 250;
 
@@ -37,100 +36,98 @@ const styles = (theme) => ({
   },
 });
 
-class PolicyTags extends React.Component {
+class PolicyProjects extends React.Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      tags: [
+      projects: [
         {
-          key: '',
-          value: '',
+          name: '',
+          credentialRef: '',
         },
       ],
     };
   }
 
   componentDidMount() {
-    if (this.props.tags && this.props.tags.length > 0) {
-      let tags = [];
-      this.props.tags.forEach((tag) => {
-        forOwn(tag, (value, key) => {
-          tags.push({
-            key,
-            value,
-          });
+    if (this.props.projects && this.props.projects.length > 0) {
+      let projects = [];
+      this.props.projects.forEach((project) => {
+        projects.push({
+          name: project.name,
+          credentialRef: project.credentialRef,
         });
       });
       this.setState({
-        tags,
+        projects,
       });
     }
   }
 
   publishChanges = (shouldUpdateErrors) => {
-    const tags = map(this.state.tags, (tag) => ({
-      [tag.key]: tag.value,
+    const projects = map(this.state.projects, (project) => ({
+      name: project.name,
+      credentialRef: project.credentialRef,
     }));
-    this.props.onChange(tags, shouldUpdateErrors);
+    this.props.onChange(projects, shouldUpdateErrors);
   };
 
   handleChange = (index, name) => (event) => {
-    const tags = this.state.tags.slice();
-    tags[index][name] = event.target.value;
-    this.setState({ tags }, () => this.publishChanges(false));
+    const projects = this.state.projects.slice();
+    projects[index][name] = event.target.value;
+    this.setState({ projects }, () => this.publishChanges(false));
   };
 
-  handleClearTag = (index) => (event) => {
-    const tags = this.state.tags.slice();
-    if (tags.length > 1) {
-      tags.splice(index, 1);
-      this.setState({ tags }, () => this.publishChanges(true));
+  handleClearProject = (index) => (event) => {
+    const projects = this.state.projects.slice();
+    if (projects.length > 1) {
+      projects.splice(index, 1);
+      this.setState({ projects }, () => this.publishChanges(true));
     }
   };
 
-  handleAddTag = (event) => {
-    const tags = this.state.tags.slice();
-    tags.push({
-      key: '',
-      value: '',
+  handleAddProject = (event) => {
+    const projects = this.state.projects.slice();
+    projects.push({
+      name: '',
+      credentialRef: '',
     });
-    this.setState({ tags }, () => this.publishChanges(false));
+    this.setState({ projects }, () => this.publishChanges(false));
   };
 
   render() {
     const { classes, error } = this.props;
-    const { tags } = this.state;
-
+    const { projects } = this.state;
     return (
       <div className={classes.root}>
-        {map(tags, (tag, index) => (
+        {map(projects, (project, index) => (
           <FormGroup row key={index}>
             <TextField
-              id="policy-tag-value"
+              id="project-name-value"
               error={error[index] && error[index][0]}
-              helperText="Key"
-              placeholder="Key"
+              helperText="Name of the project"
+              placeholder="Name"
               className={classes.textField}
-              value={tags[index].key}
-              onChange={this.handleChange(index, 'key')}
+              value={projects[index].name}
+              onChange={this.handleChange(index, 'name')}
               margin="none"
             />
             <TextField
-              id="policy-tag-key"
+              id="project-credential-value"
               error={error[index] && error[index][1]}
-              helperText="Value"
-              placeholder="Value"
+              helperText="Credential reference to access this project"
+              placeholder="Credential"
               className={classes.textField}
-              value={tags[index].value}
-              onChange={this.handleChange(index, 'value')}
+              value={projects[index].credentialRef}
+              onChange={this.handleChange(index, 'credentialRef')}
               margin="none"
             />
 
-            {tags.length > 1 && (
+            {projects.length > 1 && (
               <IconButton
                 className={classes.iconButton}
                 aria-label="Clear"
-                onClick={this.handleClearTag(index)}
+                onClick={this.handleClearProject(index)}
                 classes={{
                   root: classes.iconButton,
                 }}
@@ -141,28 +138,28 @@ class PolicyTags extends React.Component {
           </FormGroup>
         ))}
 
-        {tags.length < 7 && (
+        {projects.length < 7 && (
           <Button
             variant="outlined"
             color="primary"
             size="small"
             className={classes.addButton}
-            onClick={this.handleAddTag}
+            onClick={this.handleAddProject}
             classes={{
               sizeSmall: classes.sizeSmallButton,
             }}
           >
-            Add tag
+            Add project
           </Button>
         )}
       </div>
     );
   }
 }
-PolicyTags.propTypes = {
+PolicyProjects.propTypes = {
   classes: PropTypes.object.isRequired,
   onChange: PropTypes.func.isRequired,
   error: PropTypes.array.isRequired,
 };
 
-export default withStyles(styles)(PolicyTags);
+export default withStyles(styles)(PolicyProjects);

@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"gorm.io/datatypes"
 	"net/http"
 
@@ -42,13 +41,12 @@ func AddScheduleV1Alpha1(ctx context.Context, store store.Interface) http.Handle
 			}),
 		}
 		if err := store.SaveSchedule(s); err != nil {
-			fmt.Printf("error save to mysql: %v \n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		b, err := json.Marshal(resp)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(b)

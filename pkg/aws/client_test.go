@@ -13,7 +13,7 @@ func TestSmoke(t *testing.T) {
 	ctx := context.TODO()
 	awsRegion := os.GetEnv("AWS_REGION", "ap-southeast-1")
 	awsEndpoint := os.GetEnv("AWS_ENDPOINT", "")
-	c, err := New(ctx,
+	c, err := new(ctx,
 		awsOptions.WithRegion(awsRegion),
 		awsOptions.WithEndpoint(awsEndpoint),
 	)
