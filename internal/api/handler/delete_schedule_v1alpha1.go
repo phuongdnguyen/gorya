@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"github.com/nduyphuong/gorya/internal/store"
 	"net/http"
 )
@@ -10,12 +11,12 @@ func DeleteScheduleV1alpha1(ctx context.Context, store store.Interface) http.Han
 	return func(w http.ResponseWriter, req *http.Request) {
 		name := req.URL.Query().Get("schedule")
 		if isEmpty(name) {
-			w.WriteHeader(http.StatusBadRequest)
+			http.Error(w, errors.New("empty schedule name").Error(), http.StatusBadRequest)
 			return
 		}
 		if isUnusedSchedule(name, store) {
 			if err := store.DeleteSchedule(name); err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 		} else {

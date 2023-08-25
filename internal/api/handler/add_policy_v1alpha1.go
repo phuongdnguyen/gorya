@@ -26,7 +26,7 @@ func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerF
 			return
 		}
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		s := models.Policy{
@@ -37,12 +37,12 @@ func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerF
 			ScheduleName: m.ScheduleName,
 		}
 		if err := store.SavePolicy(s); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		b, err := json.Marshal(resp)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(b)

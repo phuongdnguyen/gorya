@@ -18,7 +18,7 @@ func ListPolicyV1alpha1(ctx context.Context, store store.Interface) http.Handler
 		}
 		policy, err := store.ListPolicy()
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		if verbose {
@@ -31,7 +31,7 @@ func ListPolicyV1alpha1(ctx context.Context, store store.Interface) http.Handler
 			}
 			b, err := json.Marshal(resp)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.Write(b)
@@ -42,7 +42,7 @@ func ListPolicyV1alpha1(ctx context.Context, store store.Interface) http.Handler
 			}
 			b, err := json.Marshal(resp)
 			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			w.Write(b)
