@@ -18,6 +18,7 @@ func main() {
 	dispatch := flag.Bool("dispatch", true, "run dispatcher")
 	process := flag.Bool("process", true, "run processor")
 	queueName := flag.String("queueName", "", "queue name")
+	action := flag.Int("action", 0, "start/stop action")
 	flag.Parse()
 	if *queueName == "" {
 		fmt.Println("nothing to do")
@@ -33,15 +34,19 @@ func main() {
 	})
 	numWorkers := 10
 	var input []worker.QueueElem
-	for i := 0; i < 100; i++ {
-		input = append(input, worker.QueueElem{
-			RequestURI: "/tasks/change_state",
-			Project:    "test-aws-account",
-			TagKey:     "phuong",
-			TagValue:   "test",
-			Action:     1,
-		})
-	}
+	input = append(input, worker.QueueElem{
+		Project:       "test-aws-account",
+		TagKey:        "foo",
+		TagValue:      "bar",
+		Action:        *action,
+		CredentialRef: "arn:aws:iam::043159268388:role/test",
+	})
+	input = append(input, worker.QueueElem{
+		Project:  "test-aws-account",
+		TagKey:   "foo",
+		TagValue: "bar",
+		Action:   *action,
+	})
 	if *dispatch {
 		for _, v := range input {
 			if err := w.Dispatch(ctx, &v); err != nil {

@@ -2,40 +2,97 @@ package aws
 
 import (
 	"context"
+	"fmt"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"sync"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/nduyphuong/gorya/pkg/aws/ec2"
 	"github.com/nduyphuong/gorya/pkg/aws/options"
 )
 
+//go:generate mockery --name Interface
 type Interface interface {
 	EC2() ec2.Interface
 }
 
+const Default = ""
+
 type client struct {
-	ec2 ec2.Interface
+	ec2  ec2.Interface
+	opts options.Options
 }
 
-func New(ctx context.Context, region string, opts ...options.Option) (Interface, error) {
-	return getOnce(ctx, region, opts...)
+type AwsPool struct {
+	credToClient map[string]Interface
+	lock         sync.Mutex
 }
 
-var (
-	awsClient   *client
-	muAwsClient sync.Mutex
-)
-
-func getOnce(ctx context.Context, region string, opts ...options.Option) (*client, error) {
-	muAwsClient.Lock()
-	defer func() {
-		muAwsClient.Unlock()
-	}()
-	if awsClient != nil {
-		return awsClient, nil
+func (b *AwsPool) New(ctx context.Context, credentialRefs map[string]bool,
+	opts ...options.Option) (*AwsPool,
+	error) {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+	b.credToClient = make(map[string]Interface)
+	for cred, _ := range credentialRefs {
+		if _, ok := b.credToClient[cred]; !ok {
+			c, err := new(ctx, append(opts, options.WithRoleArn(cred))...)
+			if err != nil {
+				return nil, err
+			}
+			b.credToClient[cred] = c
+		}
 	}
+	return b, nil
+}
+
+func (b *AwsPool) GetForCredential(name string) (Interface, bool) {
+	if name == Default {
+		return b.credToClient[Default], true
+	}
+	i, ok := b.credToClient[name]
+	if !ok {
+		return nil, false
+	}
+	fmt.Printf("getting client from pool for %v\n", name)
+	return i, true
+}
+
+func new(ctx context.Context, opts ...options.Option) (*client, error) {
 	var c client
-	var err error
-	if c.ec2, err = ec2.New(ctx, region, opts...); err != nil {
+	for _, o := range opts {
+		o.Apply(&c.opts)
+	}
+	awsEndpoint := c.opts.AwsEndpoint
+	awsRegion := c.opts.AwsRegion
+	// custom resolver so we can testing locally with localstack
+	customResolverWithOptions := aws.EndpointResolverWithOptionsFunc(
+		func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			if awsEndpoint != "" {
+				return aws.Endpoint{
+					PartitionID:   "aws",
+					URL:           awsEndpoint,
+					SigningRegion: awsRegion,
+				}, nil
+			}
+			return aws.Endpoint{}, &aws.EndpointNotFoundError{}
+		},
+	)
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(c.opts.AwsEndpoint),
+		config.WithEndpointResolverWithOptions(customResolverWithOptions),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if c.opts.AwsRoleArn != Default {
+		stsClient := sts.NewFromConfig(cfg)
+		provider := stscreds.NewAssumeRoleProvider(stsClient, c.opts.AwsRoleArn)
+		cfg.Credentials = aws.NewCredentialsCache(provider)
+	}
+	if c.ec2, err = ec2.NewFromConfig(cfg); err != nil {
 		return nil, err
 	}
 	return &c, nil

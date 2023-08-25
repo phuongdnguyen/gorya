@@ -2,10 +2,12 @@ package v1alpha1
 
 import (
 	"context"
-	"github.com/nduyphuong/gorya/internal/store"
 	"net/http"
+
+	"github.com/nduyphuong/gorya/internal/store"
 )
 
+//go:generate mockery --name GoryaServiceHandler
 type GoryaServiceHandler interface {
 	GetTimeZone() http.Handler
 	GetVersionInfo() http.Handler

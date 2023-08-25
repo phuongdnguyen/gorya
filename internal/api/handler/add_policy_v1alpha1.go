@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/nduyphuong/gorya/internal/models"
 	"github.com/nduyphuong/gorya/internal/store"
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
@@ -23,17 +22,13 @@ func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerF
 		}
 		schedule, err := store.GetSchedule(m.ScheduleName)
 		if schedule == nil {
-			fmt.Println("schedule not found")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if err != nil {
-			fmt.Printf("err: %v \n", err)
-
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
 		s := models.Policy{
 			Name:         m.Name,
 			DisplayName:  notEmpty(m.Name, m.DisplayName),
@@ -42,13 +37,12 @@ func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerF
 			ScheduleName: m.ScheduleName,
 		}
 		if err := store.SavePolicy(s); err != nil {
-			fmt.Printf("error save policy: %v \n", err)
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		b, err := json.Marshal(resp)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(b)

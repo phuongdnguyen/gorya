@@ -23,7 +23,7 @@ func GetVersionInfoV1Alpha1(v version.Version) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		b, err := json.Marshal(resp)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		w.Write(b)

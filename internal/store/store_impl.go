@@ -90,6 +90,14 @@ func (c *Storage) ListPolicy() (*[]models.Policy, error) {
 	return &r, nil
 }
 
+func (c *Storage) ListPolicyByProvider(name string) (*[]models.Policy, error) {
+	var r []models.Policy
+	if err := c.db.Where("name <> ?", name).Find(&r).Error; err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
 func (c *Storage) DeletePolicy(name string) error {
 	r := models.Policy{}
 	query := c.db.Model(&models.Policy{}).Where("name=?", name)

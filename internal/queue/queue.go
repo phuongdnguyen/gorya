@@ -9,6 +9,8 @@ import (
 )
 
 // TODO: implement a more reliable queue
+
+//go:generate mockery --name Interface
 type Interface interface {
 	Enqueue(ctx context.Context, v any) error
 	Dequeue(ctx context.Context, out chan<- string, errChan chan<- error)

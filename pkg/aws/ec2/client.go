@@ -5,38 +5,27 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/nduyphuong/gorya/pkg/aws/options"
 )
 
+//go:generate mockery --name Interface
 type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }
 
 type Client struct {
-	ec2  *ec2.Client
-	opts options.Options
+	ec2 *ec2.Client
 }
 
-func New(ctx context.Context, region string, opts ...options.Option) (*Client, error) {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion(region),
-	)
-	if err != nil {
-		return nil, err
-	}
+func NewFromConfig(cfg aws.Config) (*Client, error) {
 	c := &Client{}
-	for _, o := range opts {
-		o.Apply(&c.opts)
-	}
 	c.ec2 = ec2.NewFromConfig(cfg)
 	return c, nil
 }
 
 func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error) {
-	print(to)
 	if to != 0 && to != 1 {
 		return errors.New("to must have value of 0 or 1")
 	}
@@ -54,12 +43,16 @@ func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 		return err
 	}
 	var instancesIds []string
-	if describeInstancesOutput != nil {
-		for _, r := range describeInstancesOutput.Reservations {
-			for _, i := range r.Instances {
-				instancesIds = append(instancesIds, *i.InstanceId)
-			}
+	if describeInstancesOutput == nil {
+		return nil
+	}
+	for _, r := range describeInstancesOutput.Reservations {
+		for _, i := range r.Instances {
+			instancesIds = append(instancesIds, *i.InstanceId)
 		}
+	}
+	if len(instancesIds) == 0 {
+		return nil
 	}
 	switch to {
 	case 0:
