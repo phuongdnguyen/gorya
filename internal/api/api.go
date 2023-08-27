@@ -135,50 +135,50 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	}
 }
 
-func (s *server) GetTimeZone() http.Handler {
+func (s *server) GetTimeZone() http.HandlerFunc {
 	return handler.GetTimeZoneV1Alpha1()
 }
 
-func (s *server) GetVersionInfo() http.Handler {
+func (s *server) GetVersionInfo() http.HandlerFunc {
 	return handler.GetVersionInfoV1Alpha1(version.GetVersion())
 }
 
-func (s *server) AddSchedule(ctx context.Context) http.Handler {
+func (s *server) AddSchedule(ctx context.Context) http.HandlerFunc {
 	return handler.AddScheduleV1Alpha1(ctx, s.sc)
 }
 
-func (s *server) GetSchedule(ctx context.Context) http.Handler {
+func (s *server) GetSchedule(ctx context.Context) http.HandlerFunc {
 	return handler.GetScheduleV1alpha1(ctx, s.sc)
 }
 
-func (s *server) ListSchedule(ctx context.Context) http.Handler {
+func (s *server) ListSchedule(ctx context.Context) http.HandlerFunc {
 	return handler.ListScheduleV1alpha1(ctx, s.sc)
 }
 
-func (s *server) DeleteSchedule(ctx context.Context) http.Handler {
+func (s *server) DeleteSchedule(ctx context.Context) http.HandlerFunc {
 	return handler.DeleteScheduleV1alpha1(ctx, s.sc)
 }
 
-func (s *server) AddPolicy(ctx context.Context) http.Handler {
+func (s *server) AddPolicy(ctx context.Context) http.HandlerFunc {
 	return handler.AddPolicyV1Alpha1(ctx, s.sc)
 }
 
-func (s *server) GetPolicy(ctx context.Context) http.Handler {
+func (s *server) GetPolicy(ctx context.Context) http.HandlerFunc {
 	return handler.GetPolicyV1Alpha1(ctx, s.sc)
 }
 
-func (s *server) ListPolicy(ctx context.Context) http.Handler {
+func (s *server) ListPolicy(ctx context.Context) http.HandlerFunc {
 	return handler.ListPolicyV1alpha1(ctx, s.sc)
 }
 
-func (s *server) DeletePolicy(ctx context.Context) http.Handler {
+func (s *server) DeletePolicy(ctx context.Context) http.HandlerFunc {
 	return handler.DeletePolicyV1alpha1(ctx, s.sc)
 }
 
-func (s *server) ChangeState(ctx context.Context) http.Handler {
+func (s *server) ChangeState(ctx context.Context) http.HandlerFunc {
 	return handler.ChangeStateV1alpha1(ctx, s.aws)
 }
 
-func (s *server) ScheduleTask(ctx context.Context) http.Handler {
+func (s *server) ScheduleTask(ctx context.Context) http.HandlerFunc {
 	return handler.ScheduleTaskV1alpha1(ctx, s.sc, s.taskProcessor)
 }

@@ -2,6 +2,7 @@ package v1alpha1
 
 import (
 	"context"
+	"github.com/nduyphuong/gorya/internal/api/middleware"
 	"net/http"
 
 	"github.com/nduyphuong/gorya/internal/store"
@@ -9,18 +10,18 @@ import (
 
 //go:generate mockery --name GoryaServiceHandler
 type GoryaServiceHandler interface {
-	GetTimeZone() http.Handler
-	GetVersionInfo() http.Handler
-	AddSchedule(ctx context.Context) http.Handler
-	GetSchedule(ctx context.Context) http.Handler
-	ListSchedule(ctx context.Context) http.Handler
-	DeleteSchedule(ctx context.Context) http.Handler
-	AddPolicy(ctx context.Context) http.Handler
-	GetPolicy(ctx context.Context) http.Handler
-	ListPolicy(ctx context.Context) http.Handler
-	DeletePolicy(ctx context.Context) http.Handler
-	ChangeState(ctx context.Context) http.Handler
-	ScheduleTask(ctx context.Context) http.Handler
+	GetTimeZone() http.HandlerFunc
+	GetVersionInfo() http.HandlerFunc
+	AddSchedule(ctx context.Context) http.HandlerFunc
+	GetSchedule(ctx context.Context) http.HandlerFunc
+	ListSchedule(ctx context.Context) http.HandlerFunc
+	DeleteSchedule(ctx context.Context) http.HandlerFunc
+	AddPolicy(ctx context.Context) http.HandlerFunc
+	GetPolicy(ctx context.Context) http.HandlerFunc
+	ListPolicy(ctx context.Context) http.HandlerFunc
+	DeletePolicy(ctx context.Context) http.HandlerFunc
+	ChangeState(ctx context.Context) http.HandlerFunc
+	ScheduleTask(ctx context.Context) http.HandlerFunc
 }
 
 const (
@@ -46,17 +47,17 @@ const (
 func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc GoryaServiceHandler) (string,
 	http.Handler) {
 	mux := http.NewServeMux()
-	mux.Handle(GoryaGetTimeZoneProcedure, svc.GetTimeZone())
-	mux.Handle(GoryaGetVersionInfo, svc.GetVersionInfo())
-	mux.Handle(GoryaAddScheduleProcedure, svc.AddSchedule(ctx))
-	mux.Handle(GoryaGetScheduleProcedure, svc.GetSchedule(ctx))
-	mux.Handle(GoryaListScheduleProcedure, svc.ListSchedule(ctx))
-	mux.Handle(GoryaDeleteScheduleProcedure, svc.DeleteSchedule(ctx))
-	mux.Handle(GoryaAddPolicyProcedure, svc.AddPolicy(ctx))
-	mux.Handle(GoryaGetPolicyProcedure, svc.GetPolicy(ctx))
-	mux.Handle(GoryaListPolicyProcedure, svc.ListPolicy(ctx))
-	mux.Handle(GoryaDeletePolicyProcedure, svc.DeletePolicy(ctx))
-	mux.Handle(GoryaTaskChangeStageProcedure, svc.ChangeState(ctx))
-	mux.Handle(GoryaTaskScheduleProcedure, svc.ScheduleTask(ctx))
+	mux.Handle(GoryaGetTimeZoneProcedure, middleware.JWTAuthorization(svc.GetTimeZone(), "get-timezone", ctx))
+	mux.Handle(GoryaGetVersionInfo, middleware.JWTAuthorization(svc.GetVersionInfo(), "get-version-info", ctx))
+	mux.Handle(GoryaAddScheduleProcedure, middleware.JWTAuthorization(svc.AddSchedule(ctx), "add-schedule", ctx))
+	mux.Handle(GoryaGetScheduleProcedure, middleware.JWTAuthorization(svc.GetSchedule(ctx), "get-schedule", ctx))
+	mux.Handle(GoryaListScheduleProcedure, middleware.JWTAuthorization(svc.ListSchedule(ctx), "list-schedule", ctx))
+	mux.Handle(GoryaDeleteScheduleProcedure, middleware.JWTAuthorization(svc.DeleteSchedule(ctx), "delete-schedule", ctx))
+	mux.Handle(GoryaAddPolicyProcedure, middleware.JWTAuthorization(svc.AddPolicy(ctx), "add-policy", ctx))
+	mux.Handle(GoryaGetPolicyProcedure, middleware.JWTAuthorization(svc.GetPolicy(ctx), "get-policy", ctx))
+	mux.Handle(GoryaListPolicyProcedure, middleware.JWTAuthorization(svc.ListPolicy(ctx), "list-policy", ctx))
+	mux.Handle(GoryaDeletePolicyProcedure, middleware.JWTAuthorization(svc.DeletePolicy(ctx), "delete-policy", ctx))
+	mux.Handle(GoryaTaskChangeStageProcedure, middleware.JWTAuthorization(svc.ChangeState(ctx), "change-state", ctx))
+	mux.Handle(GoryaTaskScheduleProcedure, middleware.JWTAuthorization(svc.ScheduleTask(ctx), "schedule-task", ctx))
 	return "/", mux
 }
