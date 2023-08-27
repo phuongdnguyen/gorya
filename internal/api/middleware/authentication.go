@@ -10,7 +10,7 @@ import (
 )
 
 // Claims claims component of jwt contains many fields , we need only roles of GoryaServiceClient
-// "GoryaServiceClient":{"GoryaServiceClient":{"roles":["get-timezone","list-policy","delete-policy"]}},
+// "gorya":{"gorya":{"roles":["get-timezone","list-policy","delete-policy"]}},
 type Claims struct {
 	ResourceAccess client `json:"resource_access,omitempty"`
 	JTI            string `json:"jti,omitempty"`
