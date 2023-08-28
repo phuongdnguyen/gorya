@@ -134,10 +134,14 @@ function ResponsiveAppBar(props) {
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar
-                  alt={`${keycloak.tokenParsed.preferred_username}`}
-                  src={`https://avatars.githubusercontent.com/${keycloak.tokenParsed.preferred_username}`}
-                />
+                \
+                {/* only when authenticated we have the keycloak.tokenParsed object */}
+                {keycloak.authenticated ? (
+                  <Avatar
+                    alt="user-avatar"
+                    src={`https://avatars.githubusercontent.com/${keycloak.tokenParsed.preferred_username}`}
+                  />
+                ) : null}
               </IconButton>
             </Tooltip>
             <Menu
@@ -179,31 +183,6 @@ function ResponsiveAppBar(props) {
                   )}
                 </Typography>
               </MenuItem>
-              {/* {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography textAlign="center">
-                    {!keycloak.authenticated && (
-                      <div
-                        type="button"
-                        className="text-blue-800"
-                        onClick={() => keycloak.login()}
-                      >
-                        Login
-                      </div>
-                    )}
-
-                    {!!keycloak.authenticated && (
-                      <div
-                        type="button"
-                        className="text-blue-800"
-                        onClick={() => keycloak.logout()}
-                      >
-                        Logout
-                      </div>
-                    )}
-                  </Typography>
-                </MenuItem>
-              ))} */}
             </Menu>
           </Box>
         </Toolbar>
