@@ -15,6 +15,8 @@ import AppPageContent from '../../modules/components/AppPageContent';
 import AppPageActions from '../../modules/components/AppPageActions';
 import ScheduleService from '../../modules/api/schedule';
 import { getDefaultSchedule } from '../../modules/utils/schedule';
+import { compose } from 'react-recompose';
+import { withKeycloak } from '@react-keycloak/web';
 
 const styles = (theme) => ({
   root: {
@@ -42,15 +44,16 @@ class ScheduleCreate extends React.Component {
       backendErrorTitle: null,
       backendErrorMessage: null,
       exitPage: null,
+      keycloak: this.props.keycloak,
     };
-
     this.scheduleService = new ScheduleService();
   }
 
   async componentDidMount() {
+    const { keycloak } = this.props;
     try {
       this.setState({ isLoading: true });
-      const response = await this.scheduleService.timezones();
+      const response = await this.scheduleService.timezones(keycloak.token);
       this.setState({
         timezones: response.Timezones,
         isLoading: false,
@@ -84,7 +87,7 @@ class ScheduleCreate extends React.Component {
 
   handleCreate = async (event) => {
     try {
-      const { history } = this.props;
+      const { history, keycloak } = this.props;
       const { schedule } = this.state;
       const nameRe = /^[a-zA-Z][\w-]*[a-zA-Z0-9]$/;
       if (!nameRe.test(schedule.name)) {
@@ -94,7 +97,7 @@ class ScheduleCreate extends React.Component {
         return;
       }
       this.setState({ isLoading: true });
-      await this.scheduleService.add(schedule);
+      await this.scheduleService.add(schedule, keycloak.token);
       this.setState({ isLoading: false });
       history.push('/schedules/browser');
     } catch (error) {
@@ -140,7 +143,6 @@ class ScheduleCreate extends React.Component {
       backendErrorTitle,
       backendErrorMessage,
     } = this.state;
-
     return (
       <div className={classes.root}>
         <AppPageActions>
@@ -220,4 +222,4 @@ class ScheduleCreate extends React.Component {
   }
 }
 
-export default withStyles(styles)(ScheduleCreate);
+export default compose(withStyles(styles), withKeycloak)(ScheduleCreate);

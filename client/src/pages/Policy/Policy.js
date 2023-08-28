@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
+// Recompose
+import { compose } from 'react-recompose';
 // Material UI
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -26,6 +27,7 @@ import AppPageActions from '../../modules/components/AppPageActions';
 import PolicyService from '../../modules/api/policy';
 import ScheduleService from '../../modules/api/schedule';
 import { getDefaultPolicy } from '../../modules/utils/policy';
+import { withKeycloak } from '@react-keycloak/web';
 
 const styles = (theme) => ({
   root: {
@@ -69,16 +71,19 @@ class Policy extends React.Component {
 
   async componentDidMount() {
     try {
-      const { match } = this.props;
+      const { match, keycloak } = this.props;
       this.setState({ isLoading: true });
-      const schedules = await this.scheduleService.list();
+      const schedules = await this.scheduleService.list(keycloak.token);
       if (!schedules || !schedules.length) {
         throw new Error('Create at least one Schedule first');
       }
 
       let policy;
       if (match.params.policy) {
-        policy = await this.policyService.get(match.params.policy);
+        policy = await this.policyService.get(
+          match.params.policy,
+          this.props.keycloak.token
+        );
       } else {
         policy = getDefaultPolicy();
         if (schedules && schedules.length) {
@@ -187,7 +192,7 @@ class Policy extends React.Component {
         });
       } else {
         this.setState({ isLoading: true });
-        await this.policyService.add(policy);
+        await this.policyService.add(policy, this.props.keycloak.token);
         this.setState({ isLoading: false });
         history.push('/policies/browser');
       }
@@ -366,4 +371,4 @@ Policy.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Policy);
+export default compose(withStyles(styles), withKeycloak)(Policy);
