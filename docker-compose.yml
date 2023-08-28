@@ -47,8 +47,8 @@ services:
       GORYA_DB_TYPE: mysql
       GORYA_REDIS_ADDR: redis:6379
       GORYA_QUEUE_NAME: gorya
-      GORYA_KEYCLOAK_REALM_URL: http://keycloak:8080/auth/realms/gorya
-      GORYA_KEYCLOAK_CLIENT_ID: gorya
+      GORYA_OIDC_ISSUER_URL: http://keycloak:8080/auth/realms/gorya
+      GORYA_OIDC_CLIENT_ID: gorya
       AWS_ENDPOINT: http://localstack:4566
     depends_on:
       redis:
@@ -57,22 +57,22 @@ services:
         condition: service_healthy
     networks:
       - gorya
-
-  gorya-ui:
-#    image: ghcr.io/nduyphuong/gorya-ui
-    container_name: gorya-ui
-    ports:
-      - "3000:3000"
-    build:
-      context: .
-      dockerfile: frontend.Dockerfile
-    environment:
-      NODE_OPTIONS: --openssl-legacy-provider
-      GORYA_API_ADDR: http://gorya-backend:9000
-    depends_on:
-      - gorya-backend
-    networks:
-      - gorya
+#
+#  gorya-ui:
+##    image: ghcr.io/nduyphuong/gorya-ui
+#    container_name: gorya-ui
+#    ports:
+#      - "3000:3000"
+#    build:
+#      context: .
+#      dockerfile: frontend.Dockerfile
+#    environment:
+#      NODE_OPTIONS: --openssl-legacy-provider
+#      GORYA_API_ADDR: http://gorya-backend:9000
+#    depends_on:
+#      - gorya-backend
+#    networks:
+#      - gorya
 
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-gorya_localstack}"

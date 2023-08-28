@@ -25,8 +25,8 @@ type clientRoles struct {
 }
 
 var (
-	realmConfigUrl        = os.GetEnv("GORYA_KEYCLOAK_REALM_URL", "http://localhost:8080/auth/realms/demorealm")
-	clientID       string = os.GetEnv("GORYA_KEYCLOAK_CLIENT_ID",
+	issuerUrl        = os.GetEnv("GORYA_OIDC_ISSUER_URL", "http://localhost:8080/auth/realms/demorealm")
+	clientID  string = os.GetEnv("GORYA_OIDC_CLIENT_ID",
 		"GoryaServiceClient")
 )
 
@@ -34,7 +34,6 @@ func JWTAuthorization(h http.HandlerFunc, role string, ctx context.Context) http
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		rawAccessToken := r.Header.Get("Authorization")
-
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
@@ -43,7 +42,7 @@ func JWTAuthorization(h http.HandlerFunc, role string, ctx context.Context) http
 			Transport: tr,
 		}
 		ctx := oidc.ClientContext(ctx, client)
-		provider, err := oidc.NewProvider(ctx, realmConfigUrl)
+		provider, err := oidc.NewProvider(ctx, issuerUrl)
 		if err != nil {
 			authorisationFailed("authorisation failed while getting the provider: "+err.Error(), w, r)
 			return
