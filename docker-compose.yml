@@ -57,22 +57,22 @@ services:
         condition: service_healthy
     networks:
       - gorya
-#
-#  gorya-ui:
-##    image: ghcr.io/nduyphuong/gorya-ui
-#    container_name: gorya-ui
-#    ports:
-#      - "3000:3000"
-#    build:
-#      context: .
-#      dockerfile: frontend.Dockerfile
-#    environment:
-#      NODE_OPTIONS: --openssl-legacy-provider
-#      GORYA_API_ADDR: http://gorya-backend:9000
-#    depends_on:
-#      - gorya-backend
-#    networks:
-#      - gorya
+
+  gorya-ui:
+#    image: ghcr.io/nduyphuong/gorya-ui
+    container_name: gorya-ui
+    ports:
+      - "3000:3000"
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    environment:
+      NODE_OPTIONS: --openssl-legacy-provider
+      GORYA_API_ADDR: http://gorya-backend:9000
+    depends_on:
+      - gorya-backend
+    networks:
+      - gorya
 
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-gorya_localstack}"
