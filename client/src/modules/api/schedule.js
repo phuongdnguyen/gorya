@@ -1,8 +1,11 @@
 class ScheduleService {
-  list = async () => {
+  list = async (accessToken) => {
     const response = await fetch(`/api/v1alpha1/list_schedules?verbose=true`, {
       method: 'GET',
       credentials: 'same-origin',
+      headers: {
+        Authorization: accessToken,
+      },
     });
 
     if (!response.ok) {
@@ -14,12 +17,15 @@ class ScheduleService {
     return response.json();
   };
 
-  get = async (schedule) => {
+  get = async (schedule, accessToken) => {
     const response = await fetch(
       `/api/v1alpha1/get_schedule?schedule=${schedule}`,
       {
         method: 'GET',
         credentials: 'same-origin',
+        headers: {
+          Authorization: accessToken,
+        },
       }
     );
 
@@ -32,12 +38,15 @@ class ScheduleService {
     return response.json();
   };
 
-  delete = async (schedule) => {
+  delete = async (schedule, accessToken) => {
     const response = await fetch(
       `/api/v1alpha1/del_schedule?schedule=${schedule}`,
       {
         method: 'GET',
         credentials: 'same-origin',
+        headers: {
+          Authorization: accessToken,
+        },
       }
     );
 
@@ -49,12 +58,13 @@ class ScheduleService {
     return response;
   };
 
-  add = async (schedule) => {
+  add = async (schedule, accessToken) => {
     const response = await fetch(`/api/v1alpha1/add_schedule`, {
       method: 'POST',
       credentials: 'same-origin',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: accessToken,
       },
       body: JSON.stringify(schedule),
     });
@@ -68,10 +78,13 @@ class ScheduleService {
     return response;
   };
 
-  timezones = async () => {
+  timezones = async (accessToken) => {
     const response = await fetch(`/api/v1alpha1/time_zones`, {
       method: 'GET',
       credentials: 'same-origin',
+      headers: {
+        Authorization: accessToken,
+      },
     });
 
     if (!response.ok) {

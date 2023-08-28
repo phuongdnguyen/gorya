@@ -31,7 +31,7 @@ import indexOf from 'lodash/indexOf';
 import PolicyService from '../../modules/api/policy';
 import AppPageContent from '../../modules/components/AppPageContent';
 import AppPageActions from '../../modules/components/AppPageActions';
-
+import { withKeycloak } from '@react-keycloak/web';
 const styles = (theme) => ({
   root: {
     height: '100%',
@@ -65,7 +65,6 @@ class PolicyList extends React.Component {
       backendErrorTitle: null,
       backendErrorMessage: null,
     };
-
     this.policyService = new PolicyService();
   }
 
@@ -106,9 +105,10 @@ class PolicyList extends React.Component {
   };
 
   refreshList = async () => {
+    const { keycloak } = this.props;
     this.setState({ isLoading: true });
     try {
-      const policies = await this.policyService.list();
+      const policies = await this.policyService.list(keycloak.token);
       this.setState({
         policies,
         isLoading: false,
@@ -150,12 +150,16 @@ class PolicyList extends React.Component {
   handleDeleteClick = async (event) => {
     try {
       const { selected } = this.state;
+      const { keycloak } = this.props;
+
       if (selected.length > 0) {
         const promises = [];
         this.setState({ isLoading: true });
         selected.forEach((policy) => {
           promises.push(
-            this.policyService.delete(policy).catch((error) => error)
+            this.policyService
+              .delete(policy, keycloak.token)
+              .catch((error) => error)
           );
         });
         const responses = await Promise.all(promises);
@@ -197,7 +201,7 @@ class PolicyList extends React.Component {
   };
 
   render() {
-    const { classes } = this.props;
+    const { classes, keycloak } = this.props;
     const {
       policies,
       selected,
@@ -210,8 +214,8 @@ class PolicyList extends React.Component {
 
     const rowCount = policies.length;
     const numSelected = selected.length;
-
-    return (
+    const isLoggedIn = keycloak.authenticated;
+    return isLoggedIn ? (
       <div className={classes.root}>
         <AppPageActions>
           <Button
@@ -325,8 +329,12 @@ class PolicyList extends React.Component {
           </Table>
         </AppPageContent>
       </div>
-    );
+    ) : null;
   }
 }
 
-export default compose(withRouter, withStyles(styles))(PolicyList);
+export default compose(
+  withRouter,
+  withStyles(styles),
+  withKeycloak
+)(PolicyList);
