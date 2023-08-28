@@ -33,7 +33,7 @@ function ResponsiveAppBar(props) {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
-
+  console.log(keycloak.tokenParsed);
   return (
     <AppBar position="absolute" color="primary" elevation={2} square>
       <Container maxWidth="xl">
@@ -134,7 +134,6 @@ function ResponsiveAppBar(props) {
           <Box sx={{ flexGrow: 0 }}>
             <Tooltip title="Open settings">
               <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                \
                 {/* only when authenticated we have the keycloak.tokenParsed object */}
                 {keycloak.authenticated ? (
                   <Avatar
