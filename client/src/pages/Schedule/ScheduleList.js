@@ -30,7 +30,7 @@ import indexOf from 'lodash/indexOf';
 import ScheduleService from '../../modules/api/schedule';
 import AppPageContent from '../../modules/components/AppPageContent';
 import AppPageActions from '../../modules/components/AppPageActions';
-
+import { withKeycloak } from '@react-keycloak/web';
 const styles = (theme) => ({
   root: {
     height: '100%',
@@ -105,9 +105,10 @@ class ScheduleList extends React.Component {
   };
 
   refreshList = async () => {
+    const { keycloak } = this.props;
     this.setState({ isLoading: true });
     try {
-      const schedules = await this.scheduleService.list();
+      const schedules = await this.scheduleService.list(keycloak.token);
       this.setState({
         schedules,
         isLoading: false,
@@ -147,6 +148,7 @@ class ScheduleList extends React.Component {
   };
 
   handleDeleteClick = async (event) => {
+    const { keycloak } = this.props;
     try {
       const { selected } = this.state;
       if (selected.length > 0) {
@@ -154,7 +156,9 @@ class ScheduleList extends React.Component {
         this.setState({ isLoading: true });
         selected.forEach((schedule) => {
           promises.push(
-            this.scheduleService.delete(schedule).catch((error) => error)
+            this.scheduleService
+              .delete(schedule, keycloak.token)
+              .catch((error) => error)
           );
         });
         const responses = await Promise.all(promises);
@@ -329,4 +333,8 @@ class ScheduleList extends React.Component {
   }
 }
 
-export default compose(withRouter, withStyles(styles))(ScheduleList);
+export default compose(
+  withRouter,
+  withStyles(styles),
+  withKeycloak
+)(ScheduleList);

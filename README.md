@@ -33,6 +33,52 @@ git clone https://github.com/nduyphuong/gorya
 cd ~/go/src/github.com/nduyphuong/gorya
 docker-compose up -d
 ```
+4. Setup keycloak
+#### Client:
+![Alt text](./assets/keycloak-client.png)
+Make sure that `Access Type` is `public` and `Web Origins` is `http://localhost:3000` or `*`
+#### Roles:
+Gorya rely on keycloak for doing identity and access management.
+List of role to configure for `gorya` client:
+- add-policy
+- add-schedule
+- delete-policy
+- delete-schedule
+- get-policy
+- get-schedule
+- get-timezone
+- list-policy
+- list-schedule
+![Alt text](./assets/keycloak-roles.png)
+
+#### Github:
+Create a [github oauth app](https://github.com/settings/developers) for keycloak.
+
+Keycloak github identity provider setting:
+![Alt text](./assets/keycloak-github-idp.png)
+
+```mermaid
+sequenceDiagram
+autonumber
+actor U as User
+participant UI as Gorya UI
+participant K as Keycloak
+participant IDP as Upstream Identity Provider
+participant BE as Gorya Backend
+
+U->>UI: Unauthenticated user
+UI->>K: Redirects to Keycloak
+K->>U: Login page
+U->>K: Choose Identity Provider
+K->>U: Return Identity Provider login page
+U->>IDP: Enter credential
+IDP->>UI: Return JWT Token
+UI->>UI: Extract access token
+UI->>BE: Send request with authorization header
+BE->>K: Verify access token, with associated role in keycloak
+BE->>UI: Response
+```
+
 #### Option 2: Set up with helm
 
 TBD
@@ -44,18 +90,15 @@ sequenceDiagram
 autonumber
 actor U as User
 participant G as Gorya
-
-participant P as Gorya Processor
-participant D as Gorya Dispatcher
-
 participant Q as GoryaQueue
+participant P as Gorya Processor
 participant C as Cloud Provider APIs
 
 loop Every 60 Minutes
 U->>G: Create off time schedule
-D->>G: Evaluate
+G->>Q: Dispatch task
 end
-D->>Q: Dispatch task
+G->>Q: Dispatch task
 Q->>P: Process next item
 P->>C: Change resource status
 

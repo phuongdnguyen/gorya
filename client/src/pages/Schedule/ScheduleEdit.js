@@ -14,6 +14,8 @@ import ScheduleTimeZone from '../../modules/components/ScheduleTimeZone';
 import AppPageContent from '../../modules/components/AppPageContent';
 import AppPageActions from '../../modules/components/AppPageActions';
 import ScheduleService from '../../modules/api/schedule';
+import { compose } from 'react-recompose';
+import { withKeycloak } from '@react-keycloak/web';
 
 const styles = (theme) => ({
   root: {
@@ -44,11 +46,14 @@ class ScheduleEdit extends React.Component {
   }
 
   async componentDidMount() {
-    const { match } = this.props;
+    const { match, keycloak } = this.props;
     this.setState({ isLoading: true });
     try {
-      const schedule = await this.scheduleService.get(match.params.schedule);
-      const timezones = await this.scheduleService.timezones();
+      const schedule = await this.scheduleService.get(
+        match.params.schedule,
+        keycloak.token
+      );
+      const timezones = await this.scheduleService.timezones(keycloak.token);
       this.setState({
         schedule,
         timezones: timezones.Timezones,
@@ -82,11 +87,12 @@ class ScheduleEdit extends React.Component {
   };
 
   handleSave = async (event) => {
+    const { keycloak } = this.props;
     try {
       const { history } = this.props;
       const { schedule } = this.state;
       this.setState({ isLoading: true });
-      await this.scheduleService.add(schedule);
+      await this.scheduleService.add(schedule, keycloak.token);
       this.setState({ isLoading: false });
       history.push('/schedules/browser');
     } catch (error) {
@@ -210,4 +216,4 @@ class ScheduleEdit extends React.Component {
   }
 }
 
-export default withStyles(styles)(ScheduleEdit);
+export default compose(withStyles(styles), withKeycloak)(ScheduleEdit);
