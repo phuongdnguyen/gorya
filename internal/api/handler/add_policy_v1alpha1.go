@@ -3,11 +3,12 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/nduyphuong/gorya/internal/models"
 	"github.com/nduyphuong/gorya/internal/store"
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"gorm.io/datatypes"
-	"net/http"
 )
 
 func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerFunc {
@@ -35,6 +36,7 @@ func AddPolicyV1Alpha1(ctx context.Context, store store.Interface) http.HandlerF
 			Projects:     datatypes.NewJSONSlice(m.Projects),
 			Tags:         datatypes.NewJSONSlice(m.Tags),
 			ScheduleName: m.ScheduleName,
+			Provider:     m.Provider,
 		}
 		if err := store.SavePolicy(s); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -10,6 +10,8 @@ ARG VERSION_PACKAGE=github.com/nduyphuong/gorya/internal/version
 ARG VERSION
 ARG GIT_COMMIT
 ARG GIT_TREE_STATE
+COPY go.mod go.sum /app/
+RUN go mod download
 COPY . /app
 
 RUN cd /app && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \

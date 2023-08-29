@@ -2,8 +2,9 @@ package v1alpha1
 
 import (
 	"context"
-	"github.com/nduyphuong/gorya/internal/api/middleware"
 	"net/http"
+
+	"github.com/nduyphuong/gorya/internal/api/middleware"
 
 	"github.com/nduyphuong/gorya/internal/store"
 )
@@ -42,8 +43,6 @@ const (
 // NewGoryaServiceHandler builds an HTTP handler from the service implementation. It returns the
 //
 //	path on which to mount the handler and the handler itself.
-//
-//	 https://stackoverflow.com/questions/33646948/go-using-mux-router-how-to-pass-my-db-to-my-handlers
 func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc GoryaServiceHandler) (string,
 	http.Handler) {
 	mux := http.NewServeMux()
@@ -57,7 +56,8 @@ func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc Gory
 	mux.Handle(GoryaGetPolicyProcedure, middleware.JWTAuthorization(svc.GetPolicy(ctx), "get-policy", ctx))
 	mux.Handle(GoryaListPolicyProcedure, middleware.JWTAuthorization(svc.ListPolicy(ctx), "list-policy", ctx))
 	mux.Handle(GoryaDeletePolicyProcedure, middleware.JWTAuthorization(svc.DeletePolicy(ctx), "delete-policy", ctx))
-	mux.Handle(GoryaTaskChangeStageProcedure, middleware.JWTAuthorization(svc.ChangeState(ctx), "change-state", ctx))
-	mux.Handle(GoryaTaskScheduleProcedure, middleware.JWTAuthorization(svc.ScheduleTask(ctx), "schedule-task", ctx))
+	// TODO: whitelist for background process client
+	mux.Handle(GoryaTaskChangeStageProcedure, svc.ChangeState(ctx))
+	mux.Handle(GoryaTaskScheduleProcedure, svc.ScheduleTask(ctx))
 	return "/", mux
 }

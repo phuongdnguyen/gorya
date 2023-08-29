@@ -1,8 +1,9 @@
 package v1alpha1
 
 import (
-	"github.com/nduyphuong/gorya/internal/models"
 	"time"
+
+	"github.com/nduyphuong/gorya/internal/models"
 )
 
 type VersionInfo struct {
@@ -43,6 +44,7 @@ type AddPolicyRequest struct {
 	Tags         []map[string]string `json:"tags"`
 	Projects     []models.Project    `json:"projects"`
 	ScheduleName string              `json:"schedulename"`
+	Provider     string              `json:"provider"`
 }
 
 type GetScheduleResponse struct {
@@ -75,4 +77,5 @@ type ChangeStateRequest struct {
 	CredentialRef string `json:"credentialRef"`
 	TagKey        string `json:"tagkey"`
 	TagValue      string `json:"tagvalue"`
+	Provider      string `json:"provider"`
 }

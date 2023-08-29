@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/nduyphuong/gorya/internal/api/config"
 	"github.com/nduyphuong/gorya/internal/api/handler"
+	constants "github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/logging"
 	"github.com/nduyphuong/gorya/internal/os"
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
@@ -18,14 +21,11 @@ import (
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"github.com/nduyphuong/gorya/pkg/aws"
 	awsOptions "github.com/nduyphuong/gorya/pkg/aws/options"
+	"github.com/nduyphuong/gorya/pkg/gcp"
+	gcpOptions "github.com/nduyphuong/gorya/pkg/gcp/options"
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-)
-
-const (
-	PROVIDER_AWS = "aws"
-	PROVIDER_GCP = "gcp"
 )
 
 type Server interface {
@@ -35,7 +35,8 @@ type Server interface {
 type server struct {
 	cfg           config.ServerConfig
 	sc            store.Interface
-	aws           *aws.AwsPool
+	aws           *aws.ClientPool
+	gcp           *gcp.ClientPool
 	taskProcessor worker.Interface
 }
 
@@ -63,50 +64,104 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	if err != nil {
 		return err
 	}
-	//TODO: change to sync map
-
-	c := CredentialRef{}
-	c.credentialRef = map[string]bool{}
-	c.credentialRef[aws.Default] = true
-	awsPool := aws.AwsPool{}
+	c := CredentialRef{
+		credentialRef: map[string]bool{
+			constants.Default: true,
+		},
+	}
+	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
+	fmt.Printf("providers: %v\n", providers)
 	ticker := time.NewTicker(30 * time.Second)
-	updateAWSClientPool := func() {
-		c.lock.Lock()
-		defer c.lock.Unlock()
-		policies, err := s.sc.ListPolicyByProvider(PROVIDER_AWS)
-		for _, pol := range *policies {
-			for _, project := range pol.Projects {
-				if project.CredentialRef != "" {
-					c.credentialRef[project.CredentialRef] = true
+	c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
+	c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
+	for _, provider := range providers {
+		if provider != constants.PROVIDER_AWS && provider != constants.PROVIDER_GCP && provider != constants.PROVIDER_AZURE {
+			continue
+		}
+		if provider == constants.PROVIDER_AWS {
+			updateAWSClientPool := func() {
+				c.lock.Lock()
+				defer c.lock.Unlock()
+				policies, err := s.sc.ListPolicyByProvider(constants.PROVIDER_AWS)
+				if err != nil {
+					log.Errorf("get policy by provider %v", err)
+				}
+				for _, pol := range *policies {
+					for _, project := range pol.Projects {
+						if project.CredentialRef != "" {
+							c.credentialRef[project.CredentialRef] = true
+						}
+					}
+				}
+				//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
+				s.aws, err = aws.NewPool(
+					ctx,
+					c.credentialRef,
+					//currently we only support multi account in 1 region
+					awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
+					awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
+				)
+				if err != nil {
+					log.Errorf("update aws client pool %v", err)
+					return
 				}
 			}
+			//we update client pool for the first time then periodically update it every ticker.C seconds
+			updateAWSClientPool()
+			go func(stop <-chan struct{}) {
+				for {
+					select {
+					case <-stop:
+						log.Info("shut down aws client pool")
+						return
+					case <-ticker.C:
+						updateAWSClientPool()
+					}
+				}
+
+			}(ctx.Done())
 		}
-		//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
-		s.aws, err = awsPool.New(
-			ctx,
-			c.credentialRef,
-			//currently we only support multi account in 1 region
-			awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
-			awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
-		)
-		if err != nil {
-			log.Errorf("update aws client pool %v", err)
-			return
-		}
-	}
-	//we update client pool for the first time then periodically update it every ticker.C seconds
-	updateAWSClientPool()
-	go func(stop <-chan struct{}) {
-		for {
-			select {
-			case <-stop:
-				return
-			case <-ticker.C:
-				updateAWSClientPool()
+		if provider == constants.PROVIDER_GCP {
+			updateGCPClientPool := func() {
+				c.lock.Lock()
+				defer c.lock.Unlock()
+				policies, err := s.sc.ListPolicyByProvider(constants.PROVIDER_GCP)
+				if err != nil {
+					log.Errorf("get policy by provider %v", err)
+				}
+				for _, pol := range *policies {
+					for _, project := range pol.Projects {
+						if project.CredentialRef != "" {
+							c.credentialRef[project.CredentialRef] = true
+						}
+					}
+				}
+				s.gcp, err = gcp.NewPool(
+					ctx,
+					c.credentialRef,
+					gcpOptions.WithImpersonatedServiceAccountEmail(os.GetEnv("GCP_IMPERSONATED_SERVICE_ACCOUNT", "")),
+					gcpOptions.WithProject(os.GetEnv("GCP_PROJECT_ID", "")),
+				)
+				if err != nil {
+					log.Errorf("update gcp client pool %v", err)
+					return
+				}
 			}
+			updateGCPClientPool()
+			go func(stop <-chan struct{}) {
+				for {
+					select {
+					case <-stop:
+						log.Info("shut down gcp client pool")
+						return
+					case <-ticker.C:
+						updateGCPClientPool()
+					}
+				}
+			}(ctx.Done())
 		}
 
-	}(ctx.Done())
+	}
 
 	s.taskProcessor = worker.NewClient(worker.Options{
 		QueueOpts: queueOptions.Options{
@@ -176,7 +231,7 @@ func (s *server) DeletePolicy(ctx context.Context) http.HandlerFunc {
 }
 
 func (s *server) ChangeState(ctx context.Context) http.HandlerFunc {
-	return handler.ChangeStateV1alpha1(ctx, s.aws)
+	return handler.ChangeStateV1alpha1(ctx, s.aws, s.gcp)
 }
 
 func (s *server) ScheduleTask(ctx context.Context) http.HandlerFunc {

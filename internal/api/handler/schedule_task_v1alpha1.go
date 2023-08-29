@@ -2,12 +2,13 @@ package handler
 
 import (
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/nduyphuong/gorya/internal/store"
 	"github.com/nduyphuong/gorya/internal/worker"
 	"github.com/nduyphuong/gorya/pkg/timezone"
 	"gorm.io/gorm"
-	"net/http"
-	"time"
 )
 
 func ScheduleTaskV1alpha1(ctx context.Context, store store.Interface,
@@ -54,6 +55,7 @@ func ScheduleTaskV1alpha1(ctx context.Context, store store.Interface,
 								TagKey:        k,
 								TagValue:      v,
 								Action:        now,
+								Provider:      policy.Provider,
 							}
 							taskProcessor.Dispatch(ctx, &e)
 						}

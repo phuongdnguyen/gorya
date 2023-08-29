@@ -3,12 +3,14 @@ package aws
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/aws/ec2"
 	"github.com/nduyphuong/gorya/pkg/aws/options"
 )
@@ -18,25 +20,28 @@ type Interface interface {
 	EC2() ec2.Interface
 }
 
-const Default = ""
-
 type client struct {
 	ec2  ec2.Interface
 	opts options.Options
 }
 
-type AwsPool struct {
+type ClientPool struct {
 	credToClient map[string]Interface
-	lock         sync.Mutex
 }
 
-func (b *AwsPool) New(ctx context.Context, credentialRefs map[string]bool,
-	opts ...options.Option) (*AwsPool,
+var (
+	lock sync.Mutex
+)
+
+func NewPool(ctx context.Context, credentialRefs map[string]bool,
+	opts ...options.Option) (*ClientPool,
 	error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
-	b.credToClient = make(map[string]Interface)
-	for cred, _ := range credentialRefs {
+	lock.Lock()
+	defer lock.Unlock()
+	b := &ClientPool{
+		credToClient: make(map[string]Interface),
+	}
+	for cred := range credentialRefs {
 		if _, ok := b.credToClient[cred]; !ok {
 			c, err := new(ctx, append(opts, options.WithRoleArn(cred))...)
 			if err != nil {
@@ -48,15 +53,15 @@ func (b *AwsPool) New(ctx context.Context, credentialRefs map[string]bool,
 	return b, nil
 }
 
-func (b *AwsPool) GetForCredential(name string) (Interface, bool) {
-	if name == Default {
-		return b.credToClient[Default], true
+func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
+	if name == constants.Default {
+		return b.credToClient[constants.Default], true
 	}
 	i, ok := b.credToClient[name]
 	if !ok {
 		return nil, false
 	}
-	fmt.Printf("getting client from pool for %v\n", name)
+	fmt.Printf("got client from pool for %s", name)
 	return i, true
 }
 
@@ -87,7 +92,7 @@ func new(ctx context.Context, opts ...options.Option) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.opts.AwsRoleArn != Default {
+	if c.opts.AwsRoleArn != constants.Default {
 		stsClient := sts.NewFromConfig(cfg)
 		provider := stscreds.NewAssumeRoleProvider(stsClient, c.opts.AwsRoleArn)
 		cfg.Credentials = aws.NewCredentialsCache(provider)
