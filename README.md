@@ -2,7 +2,7 @@
 
 # Gorya
 
-Schedule for EC2, RDS and EKS instances. A Golang port of [Doiintl's Zorya](https://github.com/doitintl/zorya).
+Scheduler for compute instances across clouds. A Golang port of [Doiintl's Zorya](https://github.com/doitintl/zorya).
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/nduyphuong/gorya/dev/LICENSE)
 [![Build status](https://github.com/nduyphuong/gorya/actions/workflows/release.yml/badge.svg)](https://github.com/nduyphuong/gorya/actions)
