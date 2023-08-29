@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -70,10 +69,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 		},
 	}
 	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
-	fmt.Printf("providers: %v\n", providers)
 	ticker := time.NewTicker(30 * time.Second)
-	c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
-	c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
 	for _, provider := range providers {
 		if provider != constants.PROVIDER_AWS && provider != constants.PROVIDER_GCP && provider != constants.PROVIDER_AZURE {
 			continue
