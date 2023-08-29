@@ -24,7 +24,7 @@ AssumeRoleProvider (k<=N)
 Optimization:
 - We can init a client pool identified by AssumeRoleARN
 */
-func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.AwsPool) http.HandlerFunc {
+func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.ClientPool) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		m := svcv1alpha1.ChangeStateRequest{}
 		if err := json.NewDecoder(req.Body).Decode(&m); err != nil {

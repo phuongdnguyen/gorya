@@ -3,9 +3,10 @@ package aws
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -25,18 +26,22 @@ type client struct {
 	opts options.Options
 }
 
-type AwsPool struct {
+type ClientPool struct {
 	credToClient map[string]Interface
-	lock         sync.Mutex
 }
 
-func (b *AwsPool) New(ctx context.Context, credentialRefs map[string]bool,
-	opts ...options.Option) (*AwsPool,
+var (
+	lock sync.Mutex
+	b    *ClientPool
+)
+
+func NewPool(ctx context.Context, credentialRefs map[string]bool,
+	opts ...options.Option) (*ClientPool,
 	error) {
-	b.lock.Lock()
-	defer b.lock.Unlock()
+	lock.Lock()
+	defer lock.Unlock()
 	b.credToClient = make(map[string]Interface)
-	for cred, _ := range credentialRefs {
+	for cred := range credentialRefs {
 		if _, ok := b.credToClient[cred]; !ok {
 			c, err := new(ctx, append(opts, options.WithRoleArn(cred))...)
 			if err != nil {
@@ -48,7 +53,7 @@ func (b *AwsPool) New(ctx context.Context, credentialRefs map[string]bool,
 	return b, nil
 }
 
-func (b *AwsPool) GetForCredential(name string) (Interface, bool) {
+func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
 	if name == Default {
 		return b.credToClient[Default], true
 	}
@@ -56,7 +61,7 @@ func (b *AwsPool) GetForCredential(name string) (Interface, bool) {
 	if !ok {
 		return nil, false
 	}
-	fmt.Printf("getting client from pool for %v\n", name)
+	fmt.Printf("getting client from pool for %s", name)
 	return i, true
 }
 

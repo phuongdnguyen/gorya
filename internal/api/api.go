@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,14 +19,17 @@ import (
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"github.com/nduyphuong/gorya/pkg/aws"
 	awsOptions "github.com/nduyphuong/gorya/pkg/aws/options"
+	"github.com/nduyphuong/gorya/pkg/gcp"
+	gcpOptions "github.com/nduyphuong/gorya/pkg/gcp/options"
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
 const (
-	PROVIDER_AWS = "aws"
-	PROVIDER_GCP = "gcp"
+	PROVIDER_AWS   = "aws"
+	PROVIDER_GCP   = "gcp"
+	PROVIDER_AZURE = "azure"
 )
 
 type Server interface {
@@ -35,7 +39,8 @@ type Server interface {
 type server struct {
 	cfg           config.ServerConfig
 	sc            store.Interface
-	aws           *aws.AwsPool
+	aws           *aws.ClientPool
+	gcp           *gcp.ClientPool
 	taskProcessor worker.Interface
 }
 
@@ -63,50 +68,104 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	if err != nil {
 		return err
 	}
-	//TODO: change to sync map
-
-	c := CredentialRef{}
-	c.credentialRef = map[string]bool{}
-	c.credentialRef[aws.Default] = true
-	awsPool := aws.AwsPool{}
-	ticker := time.NewTicker(30 * time.Second)
-	updateAWSClientPool := func() {
-		c.lock.Lock()
-		defer c.lock.Unlock()
-		policies, err := s.sc.ListPolicyByProvider(PROVIDER_AWS)
-		for _, pol := range *policies {
-			for _, project := range pol.Projects {
-				if project.CredentialRef != "" {
-					c.credentialRef[project.CredentialRef] = true
+	c := CredentialRef{
+		credentialRef: map[string]bool{
+			aws.Default: true,
+		},
+	}
+	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
+	for _, provider := range providers {
+		if provider != PROVIDER_AWS && provider != PROVIDER_GCP && provider != PROVIDER_AZURE {
+			continue
+		}
+		if provider == PROVIDER_AWS {
+			ticker := time.NewTicker(30 * time.Second)
+			updateAWSClientPool := func() {
+				c.lock.Lock()
+				defer c.lock.Unlock()
+				policies, err := s.sc.ListPolicyByProvider(PROVIDER_AWS)
+				if err != nil {
+					log.Errorf("get policy by provider %v", err)
+				}
+				for _, pol := range *policies {
+					for _, project := range pol.Projects {
+						if project.CredentialRef != "" {
+							c.credentialRef[project.CredentialRef] = true
+						}
+					}
+				}
+				//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
+				s.aws, err = aws.NewPool(
+					ctx,
+					c.credentialRef,
+					//currently we only support multi account in 1 region
+					awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
+					awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
+				)
+				if err != nil {
+					log.Errorf("update aws client pool %v", err)
+					return
 				}
 			}
+			//we update client pool for the first time then periodically update it every ticker.C seconds
+			updateAWSClientPool()
+			go func(stop <-chan struct{}) {
+				for {
+					select {
+					case <-stop:
+						log.Info("shut down aws client pool")
+						return
+					case <-ticker.C:
+						updateAWSClientPool()
+					}
+				}
+
+			}(ctx.Done())
+			continue
 		}
-		//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
-		s.aws, err = awsPool.New(
-			ctx,
-			c.credentialRef,
-			//currently we only support multi account in 1 region
-			awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
-			awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
-		)
-		if err != nil {
-			log.Errorf("update aws client pool %v", err)
-			return
-		}
-	}
-	//we update client pool for the first time then periodically update it every ticker.C seconds
-	updateAWSClientPool()
-	go func(stop <-chan struct{}) {
-		for {
-			select {
-			case <-stop:
-				return
-			case <-ticker.C:
-				updateAWSClientPool()
+		if provider == PROVIDER_GCP {
+			ticker := time.NewTicker(30 * time.Second)
+			updateGCPClientPool := func() {
+				c.lock.Lock()
+				defer c.lock.Unlock()
+				policies, err := s.sc.ListPolicyByProvider(PROVIDER_GCP)
+				if err != nil {
+					log.Errorf("get policy by provider %v", err)
+				}
+				for _, pol := range *policies {
+					for _, project := range pol.Projects {
+						if project.CredentialRef != "" {
+							c.credentialRef[project.CredentialRef] = true
+						}
+					}
+				}
+				s.gcp, err = gcp.NewPool(
+					ctx,
+					c.credentialRef,
+					//currently we only support multi account in 1 region
+					gcpOptions.WithImpersonatedServiceAccountEmail(os.GetEnv("GCP_IMPERSONATED_SERVICE_ACCOUNT", "")),
+					gcpOptions.WithProject(os.GetEnv("GCP_PROJECT_ID", "")),
+				)
+				if err != nil {
+					log.Errorf("update gcp client pool %v", err)
+					return
+				}
 			}
+			updateGCPClientPool()
+			go func(stop <-chan struct{}) {
+				for {
+					select {
+					case <-stop:
+						log.Info("shut down gcp client pool")
+						return
+					case <-ticker.C:
+						updateGCPClientPool()
+					}
+				}
+			}(ctx.Done())
 		}
 
-	}(ctx.Done())
+	}
 
 	s.taskProcessor = worker.NewClient(worker.Options{
 		QueueOpts: queueOptions.Options{
