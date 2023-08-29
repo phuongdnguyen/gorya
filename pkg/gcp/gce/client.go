@@ -49,7 +49,6 @@ func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	}
 	tagFilter := fmt.Sprintf("labels.%s=%s", tagKey, tagValue)
 	for _, zone := range zones {
-		fmt.Printf("zone: %v\n", zone)
 		instanceListResp, err := c.gce.Instances.List(c.opts.Project, zone).Context(ctx).Filter(tagFilter).Do()
 		if err != nil {
 			return err

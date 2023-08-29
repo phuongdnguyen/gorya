@@ -38,7 +38,7 @@ func newWorkCommand() *cobra.Command {
 
 			numWorkers := types.MustParseInt(os.GetEnv("GORYA_NUM_WORKER", "1"))
 			for i := 0; i < numWorkers; i++ {
-				go taskProcessor.Process(ctx, taskProcessResultChan, errCh)
+				go taskProcessor.Process(ctx, ctx.Done(), errCh)
 			}
 			for task := range taskProcessResultChan {
 				var elem worker.QueueElem
@@ -47,10 +47,12 @@ func newWorkCommand() *cobra.Command {
 					return pkgerrors.Wrap(err, "unmarshal elem from queue")
 				}
 				changeStateRequest := v1alpha1.ChangeStateRequest{
-					Action:   elem.Action,
-					Project:  elem.Project,
-					TagKey:   elem.TagKey,
-					TagValue: elem.TagValue,
+					Action:        elem.Action,
+					Project:       elem.Project,
+					TagKey:        elem.TagKey,
+					TagValue:      elem.TagValue,
+					CredentialRef: elem.CredentialRef,
+					Provider:      elem.Project,
 				}
 				requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
 					"8080")), v1alpha1.GoryaTaskChangeStageProcedure)

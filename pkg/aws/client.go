@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/aws/ec2"
 	"github.com/nduyphuong/gorya/pkg/aws/options"
 )
@@ -18,8 +19,6 @@ import (
 type Interface interface {
 	EC2() ec2.Interface
 }
-
-const Default = ""
 
 type client struct {
 	ec2  ec2.Interface
@@ -32,7 +31,6 @@ type ClientPool struct {
 
 var (
 	lock sync.Mutex
-	b    *ClientPool
 )
 
 func NewPool(ctx context.Context, credentialRefs map[string]bool,
@@ -40,7 +38,9 @@ func NewPool(ctx context.Context, credentialRefs map[string]bool,
 	error) {
 	lock.Lock()
 	defer lock.Unlock()
-	b.credToClient = make(map[string]Interface)
+	b := &ClientPool{
+		credToClient: make(map[string]Interface),
+	}
 	for cred := range credentialRefs {
 		if _, ok := b.credToClient[cred]; !ok {
 			c, err := new(ctx, append(opts, options.WithRoleArn(cred))...)
@@ -54,14 +54,14 @@ func NewPool(ctx context.Context, credentialRefs map[string]bool,
 }
 
 func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
-	if name == Default {
-		return b.credToClient[Default], true
+	if name == constants.Default {
+		return b.credToClient[constants.Default], true
 	}
 	i, ok := b.credToClient[name]
 	if !ok {
 		return nil, false
 	}
-	fmt.Printf("getting client from pool for %s", name)
+	fmt.Printf("got client from pool for %s", name)
 	return i, true
 }
 
@@ -92,7 +92,7 @@ func new(ctx context.Context, opts ...options.Option) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.opts.AwsRoleArn != Default {
+	if c.opts.AwsRoleArn != constants.Default {
 		stsClient := sts.NewFromConfig(cfg)
 		provider := stscreds.NewAssumeRoleProvider(stsClient, c.opts.AwsRoleArn)
 		cfg.Credentials = aws.NewCredentialsCache(provider)

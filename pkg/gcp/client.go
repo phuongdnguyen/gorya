@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/gcp/gce"
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
 	"google.golang.org/api/impersonate"
 )
-
-const Default = ""
 
 //go:generate mockery --name Interface
 type Interface interface {
@@ -28,7 +27,6 @@ type ClientPool struct {
 
 var (
 	lock sync.Mutex
-	b    *ClientPool
 )
 
 func NewPool(ctx context.Context, credentialRefs map[string]bool,
@@ -36,7 +34,9 @@ func NewPool(ctx context.Context, credentialRefs map[string]bool,
 	error) {
 	lock.Lock()
 	defer lock.Unlock()
-	b.credToClient = make(map[string]Interface)
+	b := &ClientPool{
+		credToClient: make(map[string]Interface),
+	}
 	for cred := range credentialRefs {
 		if _, ok := b.credToClient[cred]; !ok {
 			c, err := new(ctx, append(opts, options.WithImpersonatedServiceAccountEmail(cred))...)
@@ -50,14 +50,14 @@ func NewPool(ctx context.Context, credentialRefs map[string]bool,
 }
 
 func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
-	if name == Default {
-		return b.credToClient[Default], true
+	if name == constants.Default {
+		return b.credToClient[constants.Default], true
 	}
 	i, ok := b.credToClient[name]
 	if !ok {
 		return nil, false
 	}
-	fmt.Printf("getting client from pool for %s", name)
+	fmt.Printf("got client from pool for %s", name)
 	return i, true
 }
 

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/nduyphuong/gorya/internal/api/config"
 	"github.com/nduyphuong/gorya/internal/api/handler"
+	constants "github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/logging"
 	"github.com/nduyphuong/gorya/internal/os"
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
@@ -24,12 +26,6 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
-)
-
-const (
-	PROVIDER_AWS   = "aws"
-	PROVIDER_GCP   = "gcp"
-	PROVIDER_AZURE = "azure"
 )
 
 type Server interface {
@@ -70,20 +66,23 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	}
 	c := CredentialRef{
 		credentialRef: map[string]bool{
-			aws.Default: true,
+			constants.Default: true,
 		},
 	}
 	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
+	fmt.Printf("providers: %v\n", providers)
+	ticker := time.NewTicker(30 * time.Second)
+	c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
+	c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
 	for _, provider := range providers {
-		if provider != PROVIDER_AWS && provider != PROVIDER_GCP && provider != PROVIDER_AZURE {
+		if provider != constants.PROVIDER_AWS && provider != constants.PROVIDER_GCP && provider != constants.PROVIDER_AZURE {
 			continue
 		}
-		if provider == PROVIDER_AWS {
-			ticker := time.NewTicker(30 * time.Second)
+		if provider == constants.PROVIDER_AWS {
 			updateAWSClientPool := func() {
 				c.lock.Lock()
 				defer c.lock.Unlock()
-				policies, err := s.sc.ListPolicyByProvider(PROVIDER_AWS)
+				policies, err := s.sc.ListPolicyByProvider(constants.PROVIDER_AWS)
 				if err != nil {
 					log.Errorf("get policy by provider %v", err)
 				}
@@ -121,14 +120,12 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 				}
 
 			}(ctx.Done())
-			continue
 		}
-		if provider == PROVIDER_GCP {
-			ticker := time.NewTicker(30 * time.Second)
+		if provider == constants.PROVIDER_GCP {
 			updateGCPClientPool := func() {
 				c.lock.Lock()
 				defer c.lock.Unlock()
-				policies, err := s.sc.ListPolicyByProvider(PROVIDER_GCP)
+				policies, err := s.sc.ListPolicyByProvider(constants.PROVIDER_GCP)
 				if err != nil {
 					log.Errorf("get policy by provider %v", err)
 				}
@@ -142,7 +139,6 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 				s.gcp, err = gcp.NewPool(
 					ctx,
 					c.credentialRef,
-					//currently we only support multi account in 1 region
 					gcpOptions.WithImpersonatedServiceAccountEmail(os.GetEnv("GCP_IMPERSONATED_SERVICE_ACCOUNT", "")),
 					gcpOptions.WithProject(os.GetEnv("GCP_PROJECT_ID", "")),
 				)
@@ -235,7 +231,7 @@ func (s *server) DeletePolicy(ctx context.Context) http.HandlerFunc {
 }
 
 func (s *server) ChangeState(ctx context.Context) http.HandlerFunc {
-	return handler.ChangeStateV1alpha1(ctx, s.aws)
+	return handler.ChangeStateV1alpha1(ctx, s.aws, s.gcp)
 }
 
 func (s *server) ScheduleTask(ctx context.Context) http.HandlerFunc {

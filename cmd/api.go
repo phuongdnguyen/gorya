@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
@@ -48,7 +45,6 @@ func newServerCommand() *cobra.Command {
 				},
 			})
 			ticker := time.NewTicker(2 * time.Second)
-			taskProcessResultChan := make(chan string)
 			numWorkers := types.MustParseInt(os.GetEnv("GORYA_NUM_WORKER", "2"))
 			for i := 0; i <= numWorkers; i++ {
 				// dispatch item to the queue
@@ -60,7 +56,7 @@ func newServerCommand() *cobra.Command {
 						case <-ticker.C:
 							requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
 								"8080")), v1alpha1.GoryaTaskScheduleProcedure)
-							req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+							req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 							if err != nil {
 								errCh <- pkgerrors.Wrap(err, "creating request")
 								return
@@ -72,62 +68,14 @@ func newServerCommand() *cobra.Command {
 						}
 					}
 				}(ctx.Done())
-				//dequeue item from the queue
+				//dequeue item from the queue and process
 				go func(stop <-chan struct{}) {
 					for {
 						select {
 						case <-stop:
 							return
 						case <-ticker.C:
-							taskProcessor.Process(ctx, taskProcessResultChan, errCh)
-						}
-					}
-				}(ctx.Done())
-				// process result from result channel
-				go func(stop <-chan struct{}) {
-					for {
-						select {
-						case <-stop:
-							return
-						case task := <-taskProcessResultChan:
-							log.Infof("popped item %v", task)
-							var elem worker.QueueElem
-							err := json.Unmarshal([]byte(task), &elem)
-							if err != nil {
-								log.Errorf("unmarshal elem from queue %v", err)
-								return
-							}
-							changeStateRequest := v1alpha1.ChangeStateRequest{
-								Action:        elem.Action,
-								Project:       elem.Project,
-								TagKey:        elem.TagKey,
-								TagValue:      elem.TagValue,
-								CredentialRef: elem.CredentialRef,
-							}
-							requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
-								"8080")), v1alpha1.GoryaTaskChangeStageProcedure)
-							b, err := json.Marshal(changeStateRequest)
-							if err != nil {
-								log.Errorf("unmarshal changeStateRequest %v", err)
-								return
-							}
-							req, err := http.NewRequest(http.MethodPost, requestURL, bytes.NewBuffer(b))
-							if err != nil {
-								log.Errorf("creating request %v", err)
-								return
-							}
-							req.Header.Set("Content-Type", "application/json")
-							resp, err := http.DefaultClient.Do(req)
-							if err != nil {
-								log.Errorf("making request %v", err)
-							}
-							if resp != nil {
-								if resp.StatusCode != http.StatusOK {
-									body, _ := ioutil.ReadAll(resp.Body)
-									log.Errorf("change state request failed with status code: %v and resp %v",
-										resp.StatusCode, string(body))
-								}
-							}
+							taskProcessor.Process(ctx, stop, errCh)
 						}
 					}
 				}(ctx.Done())
