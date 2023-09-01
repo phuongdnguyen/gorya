@@ -98,7 +98,7 @@ loop Every 60 Minutes
 U->>G: Create off time schedule
 G->>Q: Dispatch task
 end
-Q->>P: Process next item
+P->>Q: Process next item
 P->>C: Change resource status
 
 ```
