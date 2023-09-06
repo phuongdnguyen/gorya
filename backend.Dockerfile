@@ -6,13 +6,13 @@ ARG GH_REPO=gorya
 LABEL org.opencontainers.image.source https://github.com/${GH_ACTOR}/${GH_REPO}
 LABEL org.opencontainers.image.licenses MIT
 ARG VERSION_PACKAGE=github.com/nduyphuong/gorya/internal/version
-
 ARG VERSION
 ARG GIT_COMMIT
 ARG GIT_TREE_STATE
+WORKDIR /app
 COPY go.mod go.sum /app/
 RUN go mod download
-COPY . /app
+COPY . .
 
 RUN cd /app && GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
     -ldflags "-w -X ${VERSION_PACKAGE}.version=${VERSION} -X ${VERSION_PACKAGE}.buildDate=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X ${VERSION_PACKAGE}.gitCommit=${GIT_COMMIT} -X ${VERSION_PACKAGE}.gitTreeState=${GIT_TREE_STATE}" \

@@ -3,10 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+
 	"github.com/nduyphuong/gorya/internal/store"
 	"github.com/nduyphuong/gorya/internal/types"
 	"github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
-	"net/http"
 )
 
 func ListPolicyV1alpha1(ctx context.Context, store store.Interface) http.HandlerFunc {
@@ -22,11 +23,14 @@ func ListPolicyV1alpha1(ctx context.Context, store store.Interface) http.Handler
 			return
 		}
 		if verbose {
-			resp := v1alpha1.ListResponsesVerbose{}
+			resp := v1alpha1.ListPolicyResponsesVerbose{}
 			for _, v := range *policy {
-				resp = append(resp, v1alpha1.ListResponseVerbose{
-					Name:        v.Name,
-					DisplayName: v.DisplayName,
+				resp = append(resp, v1alpha1.ListPolicyResponseVerbose{
+					ListResponseVerbose: v1alpha1.ListResponseVerbose{
+						Name:        v.Name,
+						DisplayName: v.DisplayName,
+					},
+					Provider: v.Provider,
 				})
 			}
 			b, err := json.Marshal(resp)
