@@ -83,12 +83,10 @@ const styles = (theme) => ({
 
 function AppFrame(props) {
   const [title, setTitle] = useState('');
-  const [mobileOpen, setMobileOpen] = useState(false);
   const keycloakInitialized = props.keycloakInitialized;
   useEffect(() => {
-    const history = props.history;
     const currentLink = find(links, (link) =>
-      startsWith(history.location.pathname, link.path)
+      startsWith(props.history.location.pathname, link.path)
     );
     if (currentLink) {
       setTitle(currentLink.primary);
@@ -100,18 +98,12 @@ function AppFrame(props) {
     setTitle(link.primary);
   };
 
-  const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
-  };
-
   const classes = props.classes;
   const children = props.children;
   if (keycloakInitialized) {
     return (
       <div className={classes.root}>
         <ResponsiveAppBar
-          value={mobileOpen}
-          handleDrawerToggle={handleDrawerToggle}
           title={title}
           onClickLink={handleClickLink}
           links={links}
