@@ -175,9 +175,6 @@ function ResponsiveAppBar(props) {
                 </Button>
               ))}
             </Box>
-            <IconButton sx={{ ml: 1 }} color="inherit">
-              <Brightness4Icon />
-            </IconButton>
             <Box sx={{ flexGrow: 0 }}>
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
