@@ -1,8 +1,9 @@
 package store
 
 import (
-	"gorm.io/gorm/clause"
 	"sync"
+
+	"gorm.io/gorm/clause"
 
 	"github.com/nduyphuong/gorya/internal/models"
 	"github.com/nduyphuong/gorya/internal/os"
@@ -57,7 +58,7 @@ func (c *Storage) SavePolicy(m models.Policy) error {
 
 	if err := c.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "name"}},
-		DoUpdates: clause.AssignmentColumns([]string{"name", "display_name", "projects", "tags", "schedule_name"}),
+		DoUpdates: clause.AssignmentColumns([]string{"name", "display_name", "projects", "tags", "schedule_name", "provider"}),
 	}).Create(&m).Error; err != nil {
 		return err
 	}

@@ -33,7 +33,6 @@ function ResponsiveAppBar(props) {
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
-  console.log(keycloak.tokenParsed);
   return (
     <AppBar position="absolute" color="primary" elevation={2} square>
       <Container maxWidth="xl">

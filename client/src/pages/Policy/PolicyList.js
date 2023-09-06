@@ -23,6 +23,8 @@ import RefreshIcon from '@material-ui/icons/Refresh';
 import EditIcon from '@material-ui/icons/Edit';
 import DeleteIcon from '@material-ui/icons/Delete';
 
+import awsSvg from '../../assets/gcp.svg';
+import gcpSvg from '../../assets/aws.svg';
 // Lodash
 import map from 'lodash/map';
 import indexOf from 'lodash/indexOf';
@@ -53,6 +55,10 @@ const styles = (theme) => ({
   },
 });
 
+const providerSvg = {
+  aws: awsSvg,
+  gcp: gcpSvg,
+};
 class PolicyList extends React.Component {
   constructor(props, context) {
     super(props, context);
@@ -291,6 +297,7 @@ class PolicyList extends React.Component {
                     </TableSortLabel>
                   </Tooltip>
                 </TableCell>
+                <TableCell>Provider</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -320,6 +327,20 @@ class PolicyList extends React.Component {
                         className={classes.link}
                       >
                         {policy.displayName || policy.name}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        onClick={this.handleClickNavigate(
+                          `/policies/browser/${policy.name}`
+                        )}
+                        className={classes.link}
+                      >
+                        <img
+                          width="32"
+                          src={providerSvg[policy.provider]}
+                          alt={policy.provider}
+                        />
                       </span>
                     </TableCell>
                   </TableRow>

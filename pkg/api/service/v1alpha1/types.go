@@ -59,10 +59,16 @@ type GetScheduleResponse struct {
 
 type ListResponsesVerbose []ListResponseVerbose
 
+type ListPolicyResponsesVerbose []ListPolicyResponseVerbose
 type ListResponseVerbose struct {
 	Name string `json:"name"`
 	//compatible with UI
 	DisplayName string `json:"displayName"`
+}
+
+type ListPolicyResponseVerbose struct {
+	ListResponseVerbose
+	Provider string `json:"provider"`
 }
 
 type ListResponse []string

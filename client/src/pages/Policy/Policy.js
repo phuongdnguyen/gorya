@@ -163,7 +163,6 @@ class Policy extends React.Component {
     try {
       const { history } = this.props;
       const { policy } = this.state;
-
       const nameRe = /^[a-zA-Z][\w-]*[a-zA-Z0-9]$/;
 
       let nameError = false;
@@ -242,7 +241,7 @@ class Policy extends React.Component {
       backendErrorMessage,
       showBackendError,
     } = this.state;
-
+    const providers = ['aws', 'gcp'];
     return (
       <div className={classes.root}>
         <AppPageActions>
@@ -324,6 +323,26 @@ class Policy extends React.Component {
                     {map(schedules, (schedule) => (
                       <option key={schedule.name} value={schedule.name}>
                         {schedule.displayName || schedule.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControl className={classes.formControl}>
+                  <InputLabel shrink htmlFor="schedule-input">
+                    Schedule provider
+                  </InputLabel>
+                  <Select
+                    native
+                    value={this.state.policy.provider}
+                    onChange={this.handleChange('provider')}
+                    inputProps={{
+                      id: 'schedule-input',
+                    }}
+                  >
+                    {map(providers, (provider) => (
+                      <option key={provider} value={provider}>
+                        {provider}
                       </option>
                     ))}
                   </Select>

@@ -12,7 +12,7 @@ services:
       test: ["CMD", "redis-cli","ping"]
       timeout: 20s
       retries: 10
-  db:
+  mysql:
     image: mysql
     container_name: mysql
     command: --init-file /data/application/init.sql
@@ -43,17 +43,16 @@ services:
     environment:
       PORT: 9000
       GORYA_DB_PASSWORD: my-secret-pw
-      GORYA_DB_HOST: db
+      GORYA_DB_HOST: mysql
       GORYA_DB_TYPE: mysql
       GORYA_REDIS_ADDR: redis:6379
       GORYA_QUEUE_NAME: gorya
       GORYA_OIDC_ISSUER_URL: http://keycloak:8080/auth/realms/gorya
       GORYA_OIDC_CLIENT_ID: gorya
-      AWS_ENDPOINT: http://localstack:4566
     depends_on:
       redis:
         condition: service_healthy
-      db:
+      mysql:
         condition: service_healthy
     networks:
       - gorya
@@ -74,21 +73,6 @@ services:
     networks:
       - gorya
 
-  localstack:
-    container_name: "${LOCALSTACK_DOCKER_NAME-gorya_localstack}"
-    image: localstack/localstack-pro
-    ports:
-      - "127.0.0.1:4566:4566"            # LocalStack Gateway
-      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
-    environment:
-      - DEBUG=${DEBUG-}
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY-}
-    volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - gorya
   keycloak:
     image:  koolwithk/keycloak-arm:16.0.0
     restart: always # keep the server running
@@ -99,12 +83,11 @@ services:
       - KEYCLOAK_PASSWORD=admin
       - DB_VENDOR=mysql
       - DB_USER=root
-      - DB_ADDR=db
+      - DB_ADDR=mysql
       - DB_PORT=3306
       - DB_DATABASE=keycloak
       - DB_PASSWORD=my-secret-pw
       - KEYCLOAK_HOSTNAME=keycloak
-#      - KEYCLOAK_FRONTEND_URL=http://keycloak:8080/auth
     networks:
       - gorya
 networks:

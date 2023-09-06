@@ -9,5 +9,7 @@ export const getDefaultPolicy = () => ({
   // array of objects
   tags: [],
 
+  provider: '',
+
   schedulename: '',
 });
