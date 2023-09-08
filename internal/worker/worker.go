@@ -74,7 +74,7 @@ func (c *client) Process(ctx context.Context, stop <-chan struct{}, errChan chan
 			fmt.Println("stop background process")
 			return
 		case task := <-resultChan:
-			fmt.Printf("popped item %v", task)
+			fmt.Printf("popped item %v \n", task)
 			var elem QueueElem
 			err := json.Unmarshal([]byte(task), &elem)
 			if err != nil {

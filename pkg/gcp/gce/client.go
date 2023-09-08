@@ -3,9 +3,9 @@ package gce
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
+	"github.com/nduyphuong/gorya/pkg/gcp/utils"
 	"golang.org/x/oauth2"
 	compute "google.golang.org/api/compute/v1"
 	"google.golang.org/api/option"
@@ -16,14 +16,14 @@ type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }
 
-type Client struct {
+type client struct {
 	gce  *compute.Service
 	opts options.Options
 }
 
-func NewService(ctx context.Context, ts *oauth2.TokenSource, opts ...options.Option) (*Client, error) {
+func NewService(ctx context.Context, ts *oauth2.TokenSource, opts ...options.Option) (*client, error) {
 	var err error
-	c := &Client{}
+	c := &client{}
 	for _, o := range opts {
 		o.Apply(&c.opts)
 	}
@@ -34,7 +34,7 @@ func NewService(ctx context.Context, ts *oauth2.TokenSource, opts ...options.Opt
 	return c, nil
 }
 
-func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) error {
+func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) error {
 	if to != 0 && to != 1 {
 		return errors.New("to must have value of 0 or 1")
 	}
@@ -47,7 +47,7 @@ func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	for _, zone := range zoneListResp.Items {
 		zones = append(zones, zone.Description)
 	}
-	tagFilter := fmt.Sprintf("labels.%s=%s", tagKey, tagValue)
+	tagFilter := utils.GetComputeFilter(tagKey, tagValue)
 	for _, zone := range zones {
 		instanceListResp, err := c.gce.Instances.List(c.opts.Project, zone).Context(ctx).Filter(tagFilter).Do()
 		if err != nil {
