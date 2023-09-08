@@ -5,8 +5,6 @@ import (
 	"net/http"
 
 	"github.com/nduyphuong/gorya/internal/api/middleware"
-
-	"github.com/nduyphuong/gorya/internal/store"
 )
 
 //go:generate mockery --name GoryaServiceHandler
@@ -43,7 +41,7 @@ const (
 // NewGoryaServiceHandler builds an HTTP handler from the service implementation. It returns the
 //
 //	path on which to mount the handler and the handler itself.
-func NewGoryaServiceHandler(ctx context.Context, store store.Interface, svc GoryaServiceHandler) (string,
+func NewGoryaServiceHandler(ctx context.Context, svc GoryaServiceHandler) (string,
 	http.Handler) {
 	mux := http.NewServeMux()
 	mux.Handle(GoryaGetTimeZoneProcedure, middleware.JWTAuthorization(svc.GetTimeZone(), "get-timezone", ctx))

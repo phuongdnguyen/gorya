@@ -166,7 +166,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 			PopInterval: 2 * time.Second,
 		},
 	})
-	path, svcHandler := svcv1alpha1.NewGoryaServiceHandler(ctx, s.sc, s)
+	path, svcHandler := svcv1alpha1.NewGoryaServiceHandler(ctx, s)
 	mux.Handle(path, svcHandler)
 	srv := &http.Server{
 		Handler:           h2c.NewHandler(mux, &http2.Server{}),

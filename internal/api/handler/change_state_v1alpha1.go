@@ -32,30 +32,38 @@ func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.ClientPool, gcp
 			http.Error(w, pkgerrors.Wrap(err, "decode state change request body").Error(), http.StatusBadRequest)
 			return
 		}
-		if awsClientPool != nil && m.Provider == constants.PROVIDER_AWS {
-			awsClient, ok := awsClientPool.GetForCredential(m.CredentialRef)
-			if !ok {
-				http.Error(w, fmt.Errorf("client not found for credential %v", m.CredentialRef).Error(),
-					http.StatusBadRequest)
-				return
+		switch m.Provider {
+		case constants.PROVIDER_AWS:
+			if awsClientPool != nil {
+				awsClient, ok := awsClientPool.GetForCredential(m.CredentialRef)
+				if !ok {
+					http.Error(w, fmt.Errorf("client not found for credential %v", m.CredentialRef).Error(),
+						http.StatusBadRequest)
+					return
+				}
+				compute := awsClient.EC2()
+				if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
+					http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
+					return
+				}
 			}
-			compute := awsClient.EC2()
-			if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
-				http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
-				return
-			}
-		}
-		if gcpClientPool != nil && m.Provider == constants.PROVIDER_GCP {
-			gcpClient, ok := gcpClientPool.GetForCredential(m.CredentialRef)
-			if !ok {
-				http.Error(w, fmt.Errorf("client not found for credential %v", m.CredentialRef).Error(),
-					http.StatusBadRequest)
-				return
-			}
-			compute := gcpClient.GCE()
-			if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
-				http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
-				return
+		case constants.PROVIDER_GCP:
+			if gcpClientPool != nil {
+				gcpClient, ok := gcpClientPool.GetForCredential(m.CredentialRef)
+				if !ok {
+					http.Error(w, fmt.Errorf("client not found for credential %v", m.CredentialRef).Error(),
+						http.StatusBadRequest)
+					return
+				}
+				compute := gcpClient.GCE()
+				if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
+					http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
+				}
+				cloudSql := gcpClient.CloudSQL()
+				if err := cloudSql.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
+					http.Error(w, pkgerrors.Wrap(err, "change sql instances status").Error(), http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 	}

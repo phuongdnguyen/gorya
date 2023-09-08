@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/nduyphuong/gorya/internal/constants"
+	"github.com/nduyphuong/gorya/pkg/gcp/cloudsql"
 	"github.com/nduyphuong/gorya/pkg/gcp/gce"
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
 	"google.golang.org/api/impersonate"
@@ -14,11 +15,13 @@ import (
 //go:generate mockery --name Interface
 type Interface interface {
 	GCE() gce.Interface
+	CloudSQL() cloudsql.Interface
 }
 
 type client struct {
-	gce  gce.Interface
-	opts options.Options
+	gce      gce.Interface
+	cloudSql cloudsql.Interface
+	opts     options.Options
 }
 
 type ClientPool struct {
@@ -81,9 +84,17 @@ func new(ctx context.Context, opts ...options.Option) (*client, error) {
 	if err != nil {
 		return nil, err
 	}
+	c.cloudSql, err = cloudsql.NewService(ctx, &ts, options.WithProject(c.opts.Project))
+	if err != nil {
+		return nil, err
+	}
 	return &c, nil
 }
 
 func (c *client) GCE() gce.Interface {
 	return c.gce
+}
+
+func (c *client) CloudSQL() cloudsql.Interface {
+	return c.cloudSql
 }

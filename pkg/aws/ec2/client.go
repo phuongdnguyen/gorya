@@ -15,17 +15,17 @@ type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }
 
-type Client struct {
+type client struct {
 	ec2 *ec2.Client
 }
 
-func NewFromConfig(cfg aws.Config) (*Client, error) {
-	c := &Client{}
+func NewFromConfig(cfg aws.Config) (*client, error) {
+	c := &client{}
 	c.ec2 = ec2.NewFromConfig(cfg)
 	return c, nil
 }
 
-func (c *Client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error) {
+func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error) {
 	if to != 0 && to != 1 {
 		return errors.New("to must have value of 0 or 1")
 	}
