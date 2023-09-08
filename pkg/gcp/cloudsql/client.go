@@ -3,14 +3,14 @@ package cloudsql
 import (
 	"context"
 	"errors"
-	"fmt"
+	"sync"
 
 	"github.com/nduyphuong/gorya/internal/constants"
+	"github.com/nduyphuong/gorya/internal/logging"
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
 	"github.com/nduyphuong/gorya/pkg/gcp/utils"
 	pkgerrors "github.com/pkg/errors"
 	"golang.org/x/oauth2"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	sql "google.golang.org/api/sqladmin/v1beta4"
@@ -41,6 +41,7 @@ func NewService(ctx context.Context, ts *oauth2.TokenSource, opts ...options.Opt
 }
 
 func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) error {
+	logger := logging.LoggerFromContext(ctx)
 	if to != constants.OffStatus && to != constants.OnStatus {
 		return ErrInvalidResourceStatus
 	}
@@ -56,8 +57,9 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	if err != nil {
 		return pkgerrors.Wrap(err, "list instances")
 	}
-	eg := errgroup.Group{}
 	replicasToInstance := map[string]string{}
+	var wg sync.WaitGroup
+	wg.Add(len(instancesListResp.Items))
 	for _, instance := range instancesListResp.Items {
 		instance := instance
 		if len(instance.ReplicaNames) > 0 {
@@ -69,7 +71,8 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 			// instance is replica
 			continue
 		}
-		eg.Go(func() error {
+		go func() {
+			defer wg.Done()
 			rb := &sql.DatabaseInstance{
 				Settings: &sql.Settings{
 					ActivationPolicy: action,
@@ -77,10 +80,9 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 			}
 			_, err := c.sql.Instances.Patch(c.opts.Project, instance.Name, rb).Do()
 			if err != nil && !googleapi.IsNotModified(err) {
-				return pkgerrors.Wrap(err, fmt.Sprintf("patch instance %s", instance.Name))
+				logger.Errorf("patch instance %s", instance.Name)
 			}
-			return nil
-		})
+		}()
 	}
-	return eg.Wait()
+	return nil
 }
