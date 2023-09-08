@@ -33,6 +33,6 @@ func TestSmoke(t *testing.T) {
 	assert.NoError(t, err)
 	sqlService, err := cloudsql.NewService(ctx, &ts, options.WithProject(d.GCPProjectId))
 	assert.NoError(t, err)
-	err = sqlService.ChangeStatus(ctx, 1, "foo", "bar")
+	err = sqlService.ChangeStatus(ctx, 0, "foo", "bar")
 	assert.NoError(t, err)
 }

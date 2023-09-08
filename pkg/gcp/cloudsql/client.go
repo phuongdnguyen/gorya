@@ -3,6 +3,7 @@ package cloudsql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
@@ -55,7 +56,7 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	if err != nil {
 		return pkgerrors.Wrap(err, "list instances")
 	}
-	eg, _ := errgroup.WithContext(ctx)
+	eg := errgroup.Group{}
 	for _, instance := range instancesListResp.Items {
 		instance := instance
 		eg.Go(func() error {
@@ -66,7 +67,7 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 			}
 			_, err := c.sql.Instances.Patch(c.opts.Project, instance.Name, rb).Do()
 			if err != nil && !googleapi.IsNotModified(err) {
-				return err
+				return pkgerrors.Wrap(err, fmt.Sprintf("patch instance %s", instance.Name))
 			}
 			return nil
 		})
