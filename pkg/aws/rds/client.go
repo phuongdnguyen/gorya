@@ -3,6 +3,7 @@ package rds
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	pkgerrors "github.com/pkg/errors"
@@ -36,24 +37,40 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	}
 	dbClusters, err := c.describeDBCluster(ctx)
 	if err != nil {
-		return pkgerrors.Wrap(err, "describe dbclusters")
+		return pkgerrors.Wrap(err, "describe db clusters")
 	}
+	// fmt.Printf("dbClusters: %v\n", dbClusters)
 	dbInstances, err := c.describeDBInstance(ctx)
 	if err != nil {
-		return pkgerrors.Wrap(err, "describe dbinstances")
+		return pkgerrors.Wrap(err, "describe db instances")
 	}
+	// fmt.Printf("dbInstances: %v\n", dbInstances)
 	instanceToClusterMap := map[*string]*string{}
 	for _, cluster := range dbClusters {
+		// fmt.Printf("cluster.DBClusterIdentifier: %v\n", *cluster.DBClusterIdentifier)
 		for _, tag := range cluster.TagList {
-			if *tag.Key != tagKey || *tag.Value == tagValue {
+			// fmt.Printf("tag.Key: %v\n", *tag.Key)
+			// fmt.Printf("tag.Value: %v\n", *tag.Value)
+			if *tag.Key != tagKey || *tag.Value != tagValue {
 				continue
 			}
-			_, err = c.rds.StopDBCluster(ctx, &rds.StopDBClusterInput{
-				DBClusterIdentifier: cluster.DBClusterIdentifier,
-			})
-			if err != nil {
-				logger.Errorf("stop db cluster %v", cluster.DBClusterIdentifier)
+			switch to {
+			case constants.OnStatus:
+				_, err = c.rds.StartDBCluster(ctx, &rds.StartDBClusterInput{
+					DBClusterIdentifier: cluster.DBClusterIdentifier,
+				})
+				if err != nil {
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("start db cluster %s", *cluster.DBClusterIdentifier)))
+				}
+			case constants.OffStatus:
+				_, err = c.rds.StopDBCluster(ctx, &rds.StopDBClusterInput{
+					DBClusterIdentifier: cluster.DBClusterIdentifier,
+				})
+				if err != nil {
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop db cluster %s", *cluster.DBClusterIdentifier)))
+				}
 			}
+
 		}
 		for _, member := range cluster.DBClusterMembers {
 			instanceToClusterMap[member.DBInstanceIdentifier] = cluster.DBClusterIdentifier
@@ -61,14 +78,35 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	}
 	for _, instance := range dbInstances {
 		for _, tag := range instance.TagList {
-			if *tag.Key != tagKey || *tag.Value == tagValue || instanceToClusterMap[instance.DBInstanceIdentifier] != nil {
+			if *tag.Key != tagKey || *tag.Value != tagValue || instanceToClusterMap[instance.DBInstanceIdentifier] != nil {
 				continue
 			}
-			_, err = c.rds.StopDBInstance(ctx, &rds.StopDBInstanceInput{
-				DBInstanceIdentifier: instance.DBInstanceIdentifier,
-			})
-			if err != nil {
-				logger.Errorf("stop db instance %v", instance.DBInstanceIdentifier)
+			if instance.AutomationMode == types.AutomationModeFull {
+				_, err = c.rds.ModifyDBInstance(ctx, &rds.ModifyDBInstanceInput{
+					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+					AutomationMode:       types.AutomationModeAllPaused,
+				})
+				if err != nil {
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop rds custom automation%s", *instance.DBInstanceIdentifier)))
+					break
+				}
+
+			}
+			switch to {
+			case constants.OnStatus:
+				_, err = c.rds.StartDBInstance(ctx, &rds.StartDBInstanceInput{
+					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+				})
+				if err != nil {
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("start db instance %s", *instance.DBInstanceIdentifier)))
+				}
+			case constants.OffStatus:
+				_, err = c.rds.StopDBInstance(ctx, &rds.StopDBInstanceInput{
+					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+				})
+				if err != nil {
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop db instance %s", *instance.DBInstanceIdentifier)))
+				}
 			}
 		}
 	}
