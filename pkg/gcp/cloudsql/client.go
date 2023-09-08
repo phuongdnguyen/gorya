@@ -57,8 +57,18 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 		return pkgerrors.Wrap(err, "list instances")
 	}
 	eg := errgroup.Group{}
+	replicasToInstance := map[string]string{}
 	for _, instance := range instancesListResp.Items {
 		instance := instance
+		if len(instance.ReplicaNames) > 0 {
+			for _, replName := range instance.ReplicaNames {
+				replicasToInstance[replName] = instance.Name
+			}
+		}
+		if _, exist := replicasToInstance[instance.Name]; exist {
+			// instance is replica
+			continue
+		}
 		eg.Go(func() error {
 			rb := &sql.DatabaseInstance{
 				Settings: &sql.Settings{
