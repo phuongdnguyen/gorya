@@ -19,6 +19,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/net v0.14.0
 	golang.org/x/oauth2 v0.11.0
+	golang.org/x/sync v0.2.0
 	google.golang.org/api v0.126.0
 	gorm.io/datatypes v1.2.0
 	gorm.io/driver/mysql v1.5.1

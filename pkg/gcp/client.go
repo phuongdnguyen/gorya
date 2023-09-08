@@ -60,7 +60,7 @@ func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
 	if !ok {
 		return nil, false
 	}
-	fmt.Printf("got client from pool for %s", name)
+	fmt.Printf("got client from pool for %s\n", name)
 	return i, true
 }
 

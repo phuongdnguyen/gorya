@@ -47,7 +47,7 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	for _, zone := range zoneListResp.Items {
 		zones = append(zones, zone.Description)
 	}
-	tagFilter := utils.GetFilter(tagKey, tagValue)
+	tagFilter := utils.GetComputeFilter(tagKey, tagValue)
 	for _, zone := range zones {
 		instanceListResp, err := c.gce.Instances.List(c.opts.Project, zone).Context(ctx).Filter(tagFilter).Do()
 		if err != nil {

@@ -2,6 +2,10 @@ package utils
 
 import "fmt"
 
-func GetFilter(key, val string) string {
+func GetComputeFilter(key, val string) string {
 	return fmt.Sprintf("labels.%s=%s", key, val)
+}
+
+func GetCloudSqlFilter(key, val string) string {
+	return fmt.Sprintf("settings.userLabels.%s=%s", key, val)
 }

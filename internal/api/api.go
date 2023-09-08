@@ -71,6 +71,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
 	ticker := time.NewTicker(30 * time.Second)
 	for _, provider := range providers {
+		provider = strings.ToLower(provider)
 		if provider != constants.PROVIDER_AWS && provider != constants.PROVIDER_GCP && provider != constants.PROVIDER_AZURE {
 			continue
 		}
@@ -89,7 +90,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 						}
 					}
 				}
-				//c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
+				// c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
 				s.aws, err = aws.NewPool(
 					ctx,
 					c.credentialRef,
@@ -132,6 +133,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 						}
 					}
 				}
+				c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
 				s.gcp, err = gcp.NewPool(
 					ctx,
 					c.credentialRef,

@@ -3,19 +3,19 @@ package cloudsql
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 
 	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/gcp/options"
 	"github.com/nduyphuong/gorya/pkg/gcp/utils"
 	pkgerrors "github.com/pkg/errors"
 	"golang.org/x/oauth2"
+	"golang.org/x/sync/errgroup"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	sql "google.golang.org/api/sqladmin/v1beta4"
 )
 
-var InvalidResourceStatus = errors.New("invalid resource status")
+var ErrInvalidResourceStatus = errors.New("invalid resource status")
 
 type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
@@ -41,10 +41,8 @@ func NewService(ctx context.Context, ts *oauth2.TokenSource, opts ...options.Opt
 
 func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) error {
 	if to != constants.OffStatus && to != constants.OnStatus {
-		return InvalidResourceStatus
+		return ErrInvalidResourceStatus
 	}
-	errCh := make(chan error)
-	var resErr error
 	var action string
 	if to == constants.OffStatus {
 		action = "NEVER"
@@ -52,31 +50,26 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	if to == constants.OnStatus {
 		action = "ALWAYS"
 	}
-	tagFilter := utils.GetFilter(tagKey, tagValue)
+	tagFilter := utils.GetCloudSqlFilter(tagKey, tagValue)
 	instancesListResp, err := c.sql.Instances.List(c.opts.Project).Filter(tagFilter).Do()
 	if err != nil {
 		return pkgerrors.Wrap(err, "list instances")
 	}
-	var wg sync.WaitGroup
-	wg.Add(len(instancesListResp.Items))
+	eg, _ := errgroup.WithContext(ctx)
 	for _, instance := range instancesListResp.Items {
 		instance := instance
-		go func() {
-			defer wg.Done()
+		eg.Go(func() error {
 			rb := &sql.DatabaseInstance{
 				Settings: &sql.Settings{
 					ActivationPolicy: action,
 				},
 			}
 			_, err := c.sql.Instances.Patch(c.opts.Project, instance.Name, rb).Do()
-			if err != nil {
-				errCh <- pkgerrors.Wrap(err, fmt.Sprintf("patch instance %s", instance.Name))
+			if err != nil && !googleapi.IsNotModified(err) {
+				return err
 			}
-		}()
+			return nil
+		})
 	}
-	wg.Wait()
-	for err := range errCh {
-		resErr = errors.Join(resErr, err)
-	}
-	return resErr
+	return eg.Wait()
 }
