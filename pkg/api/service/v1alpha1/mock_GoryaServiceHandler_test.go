@@ -23,15 +23,15 @@ func (_m *MockGoryaServiceHandler) EXPECT() *MockGoryaServiceHandler_Expecter {
 }
 
 // AddPolicy provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) AddPolicy(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) AddPolicy(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -56,26 +56,26 @@ func (_c *MockGoryaServiceHandler_AddPolicy_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_AddPolicy_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_AddPolicy_Call {
+func (_c *MockGoryaServiceHandler_AddPolicy_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_AddPolicy_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_AddPolicy_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_AddPolicy_Call {
+func (_c *MockGoryaServiceHandler_AddPolicy_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_AddPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddSchedule provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) AddSchedule(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) AddSchedule(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -100,26 +100,26 @@ func (_c *MockGoryaServiceHandler_AddSchedule_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_AddSchedule_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_AddSchedule_Call {
+func (_c *MockGoryaServiceHandler_AddSchedule_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_AddSchedule_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_AddSchedule_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_AddSchedule_Call {
+func (_c *MockGoryaServiceHandler_AddSchedule_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_AddSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ChangeState provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) ChangeState(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) ChangeState(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -144,26 +144,26 @@ func (_c *MockGoryaServiceHandler_ChangeState_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ChangeState_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_ChangeState_Call {
+func (_c *MockGoryaServiceHandler_ChangeState_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_ChangeState_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ChangeState_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_ChangeState_Call {
+func (_c *MockGoryaServiceHandler_ChangeState_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_ChangeState_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeletePolicy provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) DeletePolicy(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) DeletePolicy(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -188,26 +188,26 @@ func (_c *MockGoryaServiceHandler_DeletePolicy_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_DeletePolicy_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_DeletePolicy_Call {
+func (_c *MockGoryaServiceHandler_DeletePolicy_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_DeletePolicy_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_DeletePolicy_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_DeletePolicy_Call {
+func (_c *MockGoryaServiceHandler_DeletePolicy_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_DeletePolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteSchedule provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) DeleteSchedule(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) DeleteSchedule(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -232,26 +232,26 @@ func (_c *MockGoryaServiceHandler_DeleteSchedule_Call) Run(run func(ctx context.
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_DeleteSchedule_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_DeleteSchedule_Call {
+func (_c *MockGoryaServiceHandler_DeleteSchedule_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_DeleteSchedule_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_DeleteSchedule_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_DeleteSchedule_Call {
+func (_c *MockGoryaServiceHandler_DeleteSchedule_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_DeleteSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetPolicy provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) GetPolicy(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) GetPolicy(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -276,26 +276,26 @@ func (_c *MockGoryaServiceHandler_GetPolicy_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetPolicy_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_GetPolicy_Call {
+func (_c *MockGoryaServiceHandler_GetPolicy_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_GetPolicy_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetPolicy_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_GetPolicy_Call {
+func (_c *MockGoryaServiceHandler_GetPolicy_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_GetPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetSchedule provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) GetSchedule(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) GetSchedule(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -320,26 +320,26 @@ func (_c *MockGoryaServiceHandler_GetSchedule_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetSchedule_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_GetSchedule_Call {
+func (_c *MockGoryaServiceHandler_GetSchedule_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_GetSchedule_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetSchedule_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_GetSchedule_Call {
+func (_c *MockGoryaServiceHandler_GetSchedule_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_GetSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetTimeZone provides a mock function with given fields:
-func (_m *MockGoryaServiceHandler) GetTimeZone() http.Handler {
+func (_m *MockGoryaServiceHandler) GetTimeZone() http.HandlerFunc {
 	ret := _m.Called()
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func() http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func() http.HandlerFunc); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -363,26 +363,26 @@ func (_c *MockGoryaServiceHandler_GetTimeZone_Call) Run(run func()) *MockGoryaSe
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetTimeZone_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_GetTimeZone_Call {
+func (_c *MockGoryaServiceHandler_GetTimeZone_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_GetTimeZone_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetTimeZone_Call) RunAndReturn(run func() http.Handler) *MockGoryaServiceHandler_GetTimeZone_Call {
+func (_c *MockGoryaServiceHandler_GetTimeZone_Call) RunAndReturn(run func() http.HandlerFunc) *MockGoryaServiceHandler_GetTimeZone_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetVersionInfo provides a mock function with given fields:
-func (_m *MockGoryaServiceHandler) GetVersionInfo() http.Handler {
+func (_m *MockGoryaServiceHandler) GetVersionInfo() http.HandlerFunc {
 	ret := _m.Called()
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func() http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func() http.HandlerFunc); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -406,26 +406,26 @@ func (_c *MockGoryaServiceHandler_GetVersionInfo_Call) Run(run func()) *MockGory
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetVersionInfo_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_GetVersionInfo_Call {
+func (_c *MockGoryaServiceHandler_GetVersionInfo_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_GetVersionInfo_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_GetVersionInfo_Call) RunAndReturn(run func() http.Handler) *MockGoryaServiceHandler_GetVersionInfo_Call {
+func (_c *MockGoryaServiceHandler_GetVersionInfo_Call) RunAndReturn(run func() http.HandlerFunc) *MockGoryaServiceHandler_GetVersionInfo_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListPolicy provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) ListPolicy(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) ListPolicy(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -450,26 +450,26 @@ func (_c *MockGoryaServiceHandler_ListPolicy_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ListPolicy_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_ListPolicy_Call {
+func (_c *MockGoryaServiceHandler_ListPolicy_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_ListPolicy_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ListPolicy_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_ListPolicy_Call {
+func (_c *MockGoryaServiceHandler_ListPolicy_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_ListPolicy_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListSchedule provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) ListSchedule(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) ListSchedule(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -494,26 +494,26 @@ func (_c *MockGoryaServiceHandler_ListSchedule_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ListSchedule_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_ListSchedule_Call {
+func (_c *MockGoryaServiceHandler_ListSchedule_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_ListSchedule_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ListSchedule_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_ListSchedule_Call {
+func (_c *MockGoryaServiceHandler_ListSchedule_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_ListSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ScheduleTask provides a mock function with given fields: ctx
-func (_m *MockGoryaServiceHandler) ScheduleTask(ctx context.Context) http.Handler {
+func (_m *MockGoryaServiceHandler) ScheduleTask(ctx context.Context) http.HandlerFunc {
 	ret := _m.Called(ctx)
 
-	var r0 http.Handler
-	if rf, ok := ret.Get(0).(func(context.Context) http.Handler); ok {
+	var r0 http.HandlerFunc
+	if rf, ok := ret.Get(0).(func(context.Context) http.HandlerFunc); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(http.Handler)
+			r0 = ret.Get(0).(http.HandlerFunc)
 		}
 	}
 
@@ -538,12 +538,12 @@ func (_c *MockGoryaServiceHandler_ScheduleTask_Call) Run(run func(ctx context.Co
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ScheduleTask_Call) Return(_a0 http.Handler) *MockGoryaServiceHandler_ScheduleTask_Call {
+func (_c *MockGoryaServiceHandler_ScheduleTask_Call) Return(_a0 http.HandlerFunc) *MockGoryaServiceHandler_ScheduleTask_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockGoryaServiceHandler_ScheduleTask_Call) RunAndReturn(run func(context.Context) http.Handler) *MockGoryaServiceHandler_ScheduleTask_Call {
+func (_c *MockGoryaServiceHandler_ScheduleTask_Call) RunAndReturn(run func(context.Context) http.HandlerFunc) *MockGoryaServiceHandler_ScheduleTask_Call {
 	_c.Call.Return(run)
 	return _c
 }

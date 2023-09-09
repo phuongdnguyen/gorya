@@ -16,18 +16,19 @@ import (
 
 var ErrInvalidResourceStatus = errors.New("invalid resource status")
 
+//go:generate mockery --name Interface
 type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }
 
 type client struct {
-	rds *rds.Client
+	rds *RdsClient
 }
 
-func NewFromConfig(cfg aws.Config) (*client, error) {
-	c := &client{}
-	c.rds = rds.NewFromConfig(cfg)
-	return c, nil
+func NewFromConfig(cfg aws.Config) *client {
+	return &client{
+		rds: NewRdsClientFromConfig(cfg),
+	}
 }
 
 func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error) {
@@ -35,23 +36,38 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 	if to != constants.OffStatus && to != constants.OnStatus {
 		return ErrInvalidResourceStatus
 	}
-	dbClusters, err := c.describeDBCluster(ctx)
+	seens := map[*string]types.GlobalCluster{}
+	gdbClusters, err := c.rds.fetchAlldescribeGlobalClusters(ctx)
+	if err != nil {
+		return pkgerrors.Wrap(err, "describe global db clusters")
+	}
+	/**
+	  https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-cluster-stop-start.html
+	  **/
+	for _, gCluster := range gdbClusters {
+		for _, member := range gCluster.GlobalClusterMembers {
+			seens[member.DBClusterArn] = gCluster
+		}
+		logger.Infof("found %s is global db cluster, skip", *gCluster.GlobalClusterIdentifier)
+	}
+	dbClusters, err := c.rds.fetchAllDBCluster(ctx)
 	if err != nil {
 		return pkgerrors.Wrap(err, "describe db clusters")
 	}
-	// fmt.Printf("dbClusters: %v\n", dbClusters)
-	dbInstances, err := c.describeDBInstance(ctx)
+	dbInstances, err := c.rds.fetchAllDBInstance(ctx)
 	if err != nil {
 		return pkgerrors.Wrap(err, "describe db instances")
 	}
-	// fmt.Printf("dbInstances: %v\n", dbInstances)
-	instanceToClusterMap := map[*string]*string{}
 	for _, cluster := range dbClusters {
-		// fmt.Printf("cluster.DBClusterIdentifier: %v\n", *cluster.DBClusterIdentifier)
+		if gdbIdentifier, exist := seens[cluster.DBClusterArn]; exist {
+			logger.Infof("found %s is member of aurora global db %s, skip", *cluster.DBClusterArn, *gdbIdentifier.GlobalClusterIdentifier)
+			continue
+		}
 		for _, tag := range cluster.TagList {
-			// fmt.Printf("tag.Key: %v\n", *tag.Key)
-			// fmt.Printf("tag.Value: %v\n", *tag.Value)
-			if *tag.Key != tagKey || *tag.Value != tagValue {
+			if *tag.Key != tagKey {
+				continue
+			}
+			if *tag.Value != tagValue {
 				continue
 			}
 			switch to {
@@ -72,22 +88,40 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 			}
 
 		}
-		for _, member := range cluster.DBClusterMembers {
-			instanceToClusterMap[member.DBInstanceIdentifier] = cluster.DBClusterIdentifier
-		}
 	}
 	for _, instance := range dbInstances {
-		for _, tag := range instance.TagList {
-			if *tag.Key != tagKey || *tag.Value != tagValue || instanceToClusterMap[instance.DBInstanceIdentifier] != nil {
+		dbInstance := DBInstance{
+			instance,
+		}
+		if dbInstance.hasClusterMembership() {
+			logger.Infof("instance %s is member of cluster %s, skip", *dbInstance.DBInstanceIdentifier, *dbInstance.DBClusterIdentifier)
+			continue
+		}
+		if dbInstance.hasReadReplicas() {
+			logger.Infof("instance %s has read replicas, skip", *dbInstance.DBInstanceIdentifier)
+			continue
+		}
+		if dbInstance.isReplica() {
+			logger.Infof("instance %s is a read replica, skip", *dbInstance.DBInstanceIdentifier)
+			continue
+		}
+		for _, tag := range dbInstance.TagList {
+			if *tag.Key != tagKey {
 				continue
 			}
-			if instance.AutomationMode == types.AutomationModeFull {
+			if *tag.Value != tagValue {
+				continue
+			}
+			/**
+			  https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/custom-managing-sqlserver.html#custom-managing-sqlserver.startstop
+			  **/
+			if dbInstance.AutomationMode == types.AutomationModeFull {
 				_, err = c.rds.ModifyDBInstance(ctx, &rds.ModifyDBInstanceInput{
-					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+					DBInstanceIdentifier: dbInstance.DBInstanceIdentifier,
 					AutomationMode:       types.AutomationModeAllPaused,
 				})
 				if err != nil {
-					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop rds custom automation%s", *instance.DBInstanceIdentifier)))
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop rds custom automation%s", *dbInstance.DBInstanceIdentifier)))
 					break
 				}
 
@@ -95,57 +129,21 @@ func (c *client) ChangeStatus(ctx context.Context, to int, tagKey string, tagVal
 			switch to {
 			case constants.OnStatus:
 				_, err = c.rds.StartDBInstance(ctx, &rds.StartDBInstanceInput{
-					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+					DBInstanceIdentifier: dbInstance.DBInstanceIdentifier,
 				})
 				if err != nil {
-					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("start db instance %s", *instance.DBInstanceIdentifier)))
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("start db instance %s", *dbInstance.DBInstanceIdentifier)))
 				}
 			case constants.OffStatus:
 				_, err = c.rds.StopDBInstance(ctx, &rds.StopDBInstanceInput{
-					DBInstanceIdentifier: instance.DBInstanceIdentifier,
+					DBInstanceIdentifier: dbInstance.DBInstanceIdentifier,
 				})
 				if err != nil {
-					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop db instance %s", *instance.DBInstanceIdentifier)))
+					logger.Error(pkgerrors.Wrap(err, fmt.Sprintf("stop db instance %s", *dbInstance.DBInstanceIdentifier)))
 				}
 			}
 		}
 	}
 
 	return nil
-}
-
-func (c *client) describeDBCluster(ctx context.Context) ([]types.DBCluster, error) {
-	dbClusters := []types.DBCluster{}
-	describeDBClusterOut, err := c.rds.DescribeDBClusters(ctx, &rds.DescribeDBClustersInput{})
-	if err != nil {
-		return nil, err
-	}
-	dbClusters = append(dbClusters, describeDBClusterOut.DBClusters...)
-	for describeDBClusterOut.Marker != nil {
-		describeDBClusterOut, err := c.rds.DescribeDBClusters(ctx, &rds.DescribeDBClustersInput{Marker: describeDBClusterOut.Marker})
-		if err != nil {
-			return nil, err
-		}
-		dbClusters = append(dbClusters, describeDBClusterOut.DBClusters...)
-	}
-	return dbClusters, nil
-}
-
-func (c *client) describeDBInstance(ctx context.Context) ([]types.DBInstance, error) {
-	dbInstances := []types.DBInstance{}
-	describeDBInstanceOut, err := c.rds.DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{})
-	if err != nil {
-		return nil, err
-	}
-	dbInstances = append(dbInstances, describeDBInstanceOut.DBInstances...)
-	for describeDBInstanceOut.Marker != nil {
-		describeDBInstanceOut, err := c.rds.DescribeDBInstances(ctx, &rds.DescribeDBInstancesInput{
-			Marker: describeDBInstanceOut.Marker,
-		})
-		if err != nil {
-			return nil, err
-		}
-		dbInstances = append(dbInstances, describeDBInstanceOut.DBInstances...)
-	}
-	return dbInstances, nil
 }

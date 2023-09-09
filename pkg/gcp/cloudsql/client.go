@@ -18,6 +18,7 @@ import (
 
 var ErrInvalidResourceStatus = errors.New("invalid resource status")
 
+//go:generate mockery --name Interface
 type Interface interface {
 	ChangeStatus(ctx context.Context, to int, tagKey string, tagValue string) (err error)
 }
