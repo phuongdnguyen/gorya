@@ -15,8 +15,7 @@ func TestSmoke(t *testing.T) {
 		config.WithRegion("ap-southeast-1"),
 	)
 	assert.NoError(t, err)
-	c, err := rds.NewFromConfig(cfg)
-	assert.NoError(t, err)
+	c := rds.NewFromConfig(cfg)
 	err = c.ChangeStatus(ctx, 1, "foo", "bar")
 	assert.NoError(t, err)
 }

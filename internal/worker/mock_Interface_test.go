@@ -64,9 +64,9 @@ func (_c *MockInterface_Dispatch_Call) RunAndReturn(run func(context.Context, *Q
 	return _c
 }
 
-// Process provides a mock function with given fields: ctx, resultChan, errChan
-func (_m *MockInterface) Process(ctx context.Context, resultChan chan<- string, errChan chan<- error) {
-	_m.Called(ctx, resultChan, errChan)
+// Process provides a mock function with given fields: ctx, stop, errChan
+func (_m *MockInterface) Process(ctx context.Context, stop <-chan struct{}, errChan chan<- error) {
+	_m.Called(ctx, stop, errChan)
 }
 
 // MockInterface_Process_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Process'
@@ -76,15 +76,15 @@ type MockInterface_Process_Call struct {
 
 // Process is a helper method to define mock.On call
 //   - ctx context.Context
-//   - resultChan chan<- string
+//   - stop <-chan struct{}
 //   - errChan chan<- error
-func (_e *MockInterface_Expecter) Process(ctx interface{}, resultChan interface{}, errChan interface{}) *MockInterface_Process_Call {
-	return &MockInterface_Process_Call{Call: _e.mock.On("Process", ctx, resultChan, errChan)}
+func (_e *MockInterface_Expecter) Process(ctx interface{}, stop interface{}, errChan interface{}) *MockInterface_Process_Call {
+	return &MockInterface_Process_Call{Call: _e.mock.On("Process", ctx, stop, errChan)}
 }
 
-func (_c *MockInterface_Process_Call) Run(run func(ctx context.Context, resultChan chan<- string, errChan chan<- error)) *MockInterface_Process_Call {
+func (_c *MockInterface_Process_Call) Run(run func(ctx context.Context, stop <-chan struct{}, errChan chan<- error)) *MockInterface_Process_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(chan<- string), args[2].(chan<- error))
+		run(args[0].(context.Context), args[1].(<-chan struct{}), args[2].(chan<- error))
 	})
 	return _c
 }
@@ -94,7 +94,7 @@ func (_c *MockInterface_Process_Call) Return() *MockInterface_Process_Call {
 	return _c
 }
 
-func (_c *MockInterface_Process_Call) RunAndReturn(run func(context.Context, chan<- string, chan<- error)) *MockInterface_Process_Call {
+func (_c *MockInterface_Process_Call) RunAndReturn(run func(context.Context, <-chan struct{}, chan<- error)) *MockInterface_Process_Call {
 	_c.Call.Return(run)
 	return _c
 }
