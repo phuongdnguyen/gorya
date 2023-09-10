@@ -2,6 +2,9 @@ package logging
 
 import (
 	"context"
+	"path"
+	"runtime"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -19,6 +22,14 @@ func init() {
 		panic(err)
 	}
 	globalLogger.Logger.SetLevel(level)
+	globalLogger.Logger.SetReportCaller(true)
+	globalLogger.Logger.SetFormatter(&log.TextFormatter{
+		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
+			fileName := path.Base(frame.File) + ":" + strconv.Itoa(frame.Line)
+			//return frame.Function, fileName
+			return "", fileName
+		},
+	})
 }
 
 // ContextWithLogger returns a context.Context that has been augmented with

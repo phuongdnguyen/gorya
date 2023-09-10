@@ -2,7 +2,11 @@ package azure
 
 import (
 	"context"
+	"fmt"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/pkg/azure/avm"
 	"github.com/nduyphuong/gorya/pkg/azure/options"
 	"sync"
@@ -25,6 +29,7 @@ var (
 	lock sync.Mutex
 )
 
+// NewPool return a pool of client identified by subscriptionId
 func NewPool(ctx context.Context, credentialRefs map[string]bool,
 	opts ...options.Option) (*ClientPool,
 	error) {
@@ -33,41 +38,64 @@ func NewPool(ctx context.Context, credentialRefs map[string]bool,
 	b := &ClientPool{
 		credToClient: make(map[string]Interface),
 	}
-	for cred := range credentialRefs {
-		if _, ok := b.credToClient[cred]; !ok {
-			c, err := new(append(opts, options.WithTenantId(cred))...)
+	conn, err := azidentity.NewDefaultAzureCredential(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for subscription := range credentialRefs {
+		//cred = subscription
+		if _, ok := b.credToClient[subscription]; !ok {
+			resourceGroupClient, err := armresources.NewResourceGroupsClient(subscription, conn, nil)
 			if err != nil {
 				return nil, err
 			}
-			b.credToClient[cred] = c
+			rPager := resourceGroupClient.NewListPager(nil)
+			var resourceGroups []string
+			for rPager.More() {
+				page, err := rPager.NextPage(ctx)
+				if err != nil {
+					return nil, err
+				}
+				for _, resourceGroup := range page.Value {
+					resourceGroups = append(resourceGroups, *resourceGroup.Name)
+				}
+			}
+			c, err := new(conn, append(opts, options.WithSubscriptionId(subscription), options.WithTargetResourceGroups(resourceGroups))...)
+			if err != nil {
+				return nil, err
+			}
+			b.credToClient[subscription] = c
 		}
 	}
 	return b, nil
 }
 
-func new(opts ...options.Option) (*client, error) {
-	var c client
-	for _, o := range opts {
-		o.Apply(&c.opts)
-	}
-	conn, err := azidentity.NewDefaultAzureCredential(&azidentity.DefaultAzureCredentialOptions{
-		//load from env
-		// AZURE_TENANT_ID: ID of the service principal's tenant. Also called its "directory" ID.
-		//
-		// AZURE_CLIENT_ID: the service principal's client ID
-		//
-		// AZURE_CLIENT_SECRET: one of the service principal's client secrets
-		//target tenant
-		TenantID: c.opts.TenantId,
-	})
+// new return a client for a subscriptionId
+func new(conn azcore.TokenCredential, opts ...options.Option) (*client, error) {
+	avm, err := avm.New(conn, opts...)
 	if err != nil {
 		return nil, err
 	}
-	c.avm, err = avm.New(conn, opts...)
+	c := client{
+		avm: avm,
+	}
 	if err != nil {
 		return nil, err
 	}
 	return &c, nil
+}
+
+func (b *ClientPool) GetForCredential(name string) (Interface, bool) {
+	if name == constants.Default {
+		panic("az subscription id must not be empty")
+	}
+	i, ok := b.credToClient[name]
+	if !ok {
+		return nil, false
+	}
+	fmt.Printf("got client from pool for %s\n", name)
+	return i, true
 }
 
 func (c *client) AVM() avm.Interface { return c.avm }
