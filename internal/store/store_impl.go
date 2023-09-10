@@ -5,6 +5,7 @@ import (
 
 	"gorm.io/gorm/clause"
 
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/models"
 	"github.com/nduyphuong/gorya/internal/os"
 	"gorm.io/gorm"
@@ -25,11 +26,11 @@ func GetOnce() (Interface, error) {
 	if modelStorage != nil {
 		return modelStorage, nil
 	}
-	dbType := os.GetEnv("GORYA_DB_TYPE", "sqlite")
-	host := os.GetEnv("GORYA_DB_HOST", "localhost:3306")
-	user := os.GetEnv("GORYA_DB_USER", "root")
-	password := os.GetEnv("GORYA_DB_PASSWORD", "root")
-	dbName := os.GetEnv("GORYA_DB_NAME", "gorya")
+	dbType := os.GetEnv(constants.ENV_GORYA_DB_TYPE, "sqlite")
+	host := os.GetEnv(constants.ENV_GORYA_DB_HOST, "localhost:3306")
+	user := os.GetEnv(constants.ENV_GORYA_DB_USER, "root")
+	password := os.GetEnv(constants.ENV_GORYA_DB_PASSWORD, "root")
+	dbName := os.GetEnv(constants.ENV_GORYA_DB_NAME, "gorya")
 	switch dbType {
 	case "mysql":
 		db, err := NewMySQLDB(host, user, password, dbName)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/nduyphuong/gorya/internal/api"
 	"github.com/nduyphuong/gorya/internal/api/config"
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/os"
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
 	"github.com/nduyphuong/gorya/internal/types"
@@ -38,14 +39,15 @@ func newServerCommand() *cobra.Command {
 			errCh := make(chan error, 2)
 			taskProcessor := worker.NewClient(worker.Options{
 				QueueOpts: queueOptions.Options{
-					Name: os.GetEnv("GORYA_QUEUE_NAME", "gorya"),
-					Addr: os.GetEnv("GORYA_REDIS_ADDR", "localhost:6379"),
+					Name: os.GetEnv(constants.ENV_GORYA_QUEUE_NAME, "gorya"),
+					Addr: os.GetEnv(constants.ENV_GORYA_REDIS_ADDR, "localhost:6379"),
 					//check in queue every 5 seconds
 					PopInterval: 5 * time.Second,
 				},
 			})
 			ticker := time.NewTicker(2 * time.Second)
-			numWorkers := types.MustParseInt(os.GetEnv("GORYA_NUM_WORKER", "2"))
+			numWorkers := types.MustParseInt(os.GetEnv(
+				constants.ENV_GORYA_NUM_WORKER, "2"))
 			for i := 0; i <= numWorkers; i++ {
 				// dispatch item to the queue
 				go func(stop <-chan struct{}) {
@@ -54,7 +56,7 @@ func newServerCommand() *cobra.Command {
 						case <-stop:
 							return
 						case <-ticker.C:
-							requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
+							requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv(constants.ENV_GORYA_API_PORT,
 								"8080")), v1alpha1.GoryaTaskScheduleProcedure)
 							req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 							if err != nil {
@@ -90,8 +92,8 @@ func newServerCommand() *cobra.Command {
 				"tcp",
 				fmt.Sprintf(
 					"%s:%s",
-					os.GetEnv("HOST", "0.0.0.0"),
-					os.GetEnv("PORT", "8080"),
+					os.GetEnv(constants.ENV_GORYA_API_HOST, "0.0.0.0"),
+					os.GetEnv(constants.ENV_GORYA_API_PORT, "8080"),
 				),
 			)
 			if err != nil {
