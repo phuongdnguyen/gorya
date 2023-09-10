@@ -72,7 +72,7 @@ func new(ctx context.Context, opts ...options.Option) (*client, error) {
 	}
 	awsEndpoint := c.opts.AwsEndpoint
 	awsRegion := c.opts.AwsRegion
-	// custom resolver so we can testing locally with localstack
+	// custom resolver so we can test locally with localstack
 	customResolverWithOptions := aws.EndpointResolverWithOptionsFunc(
 		func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			if awsEndpoint != "" {

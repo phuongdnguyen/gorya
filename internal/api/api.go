@@ -2,6 +2,9 @@ package api
 
 import (
 	"context"
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	"github.com/nduyphuong/gorya/pkg/azure"
 	"net"
 	"net/http"
 	"strings"
@@ -10,7 +13,7 @@ import (
 
 	"github.com/nduyphuong/gorya/internal/api/config"
 	"github.com/nduyphuong/gorya/internal/api/handler"
-	constants "github.com/nduyphuong/gorya/internal/constants"
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/logging"
 	"github.com/nduyphuong/gorya/internal/os"
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
@@ -22,6 +25,7 @@ import (
 	awsOptions "github.com/nduyphuong/gorya/pkg/aws/options"
 	"github.com/nduyphuong/gorya/pkg/gcp"
 	gcpOptions "github.com/nduyphuong/gorya/pkg/gcp/options"
+
 	"github.com/pkg/errors"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -36,6 +40,7 @@ type server struct {
 	sc            store.Interface
 	aws           *aws.ClientPool
 	gcp           *gcp.ClientPool
+	azure         *azure.ClientPool
 	taskProcessor worker.Interface
 }
 
@@ -90,7 +95,6 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 						}
 					}
 				}
-				// c.credentialRef["arn:aws:iam::043159268388:role/test"] = true
 				s.aws, err = aws.NewPool(
 					ctx,
 					c.credentialRef,
@@ -133,12 +137,12 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 						}
 					}
 				}
-				c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
+				//c.credentialRef["priv-sa@target-project-397310.iam.gserviceaccount.com"] = true
 				s.gcp, err = gcp.NewPool(
 					ctx,
 					c.credentialRef,
-					gcpOptions.WithImpersonatedServiceAccountEmail(os.GetEnv("GCP_IMPERSONATED_SERVICE_ACCOUNT", "")),
-					gcpOptions.WithProject(os.GetEnv("GCP_PROJECT_ID", "")),
+					gcpOptions.WithImpersonatedServiceAccountEmail(os.MustGetEnv("GCP_IMPERSONATED_SERVICE_ACCOUNT")),
+					gcpOptions.WithProject(os.MustGetEnv("GCP_PROJECT_ID")),
 				)
 				if err != nil {
 					log.Errorf("update gcp client pool %v", err)
@@ -158,7 +162,50 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 				}
 			}(ctx.Done())
 		}
-
+		if provider == constants.PROVIDER_AZURE {
+			updateAzureClientPool := func() {
+				c.lock.Lock()
+				defer c.lock.Unlock()
+				conn, err := azidentity.NewDefaultAzureCredential(nil)
+				if err != nil {
+					log.Fatalf("get default az credential %v", err)
+				}
+				armSubscription, err := armsubscriptions.NewClient(conn, nil)
+				if err != nil {
+					log.Fatalf("get armsubscriptions client %v", err)
+				}
+				subPager := armSubscription.NewListPager(nil)
+				for subPager.More() {
+					page, err := subPager.NextPage(ctx)
+					if err != nil {
+						log.Fatalf("list subscriptions %v", err)
+					}
+					for _, subscription := range page.Value {
+						c.credentialRef[*subscription.SubscriptionID] = true
+					}
+				}
+				s.azure, err = azure.NewPool(
+					ctx,
+					c.credentialRef,
+				)
+				if err != nil {
+					log.Errorf("update azure client pool %v", err)
+					return
+				}
+			}
+			updateAzureClientPool()
+			go func(stop <-chan struct{}) {
+				for {
+					select {
+					case <-stop:
+						log.Info("shut down azure client pool")
+						return
+					case <-ticker.C:
+						updateAzureClientPool()
+					}
+				}
+			}(ctx.Done())
+		}
 	}
 
 	s.taskProcessor = worker.NewClient(worker.Options{
@@ -229,7 +276,7 @@ func (s *server) DeletePolicy(ctx context.Context) http.HandlerFunc {
 }
 
 func (s *server) ChangeState(ctx context.Context) http.HandlerFunc {
-	return handler.ChangeStateV1alpha1(ctx, s.aws, s.gcp)
+	return handler.ChangeStateV1alpha1(ctx, s.aws, s.gcp, s.azure)
 }
 
 func (s *server) ScheduleTask(ctx context.Context) http.HandlerFunc {

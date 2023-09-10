@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/nduyphuong/gorya/pkg/azure"
 	"net/http"
 
-	constants "github.com/nduyphuong/gorya/internal/constants"
+	"github.com/nduyphuong/gorya/internal/constants"
 	svcv1alpha1 "github.com/nduyphuong/gorya/pkg/api/service/v1alpha1"
 	"github.com/nduyphuong/gorya/pkg/aws"
 	"github.com/nduyphuong/gorya/pkg/gcp"
@@ -25,7 +26,9 @@ AssumeRoleProvider (k<=N)
 Optimization:
 - We can init a client pool identified by AssumeRoleARN
 */
-func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.ClientPool, gcpClientPool *gcp.ClientPool) http.HandlerFunc {
+func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.ClientPool, gcpClientPool *gcp.ClientPool,
+	azureClientPool *azure.ClientPool,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		m := svcv1alpha1.ChangeStateRequest{}
 		if err := json.NewDecoder(req.Body).Decode(&m); err != nil {
@@ -45,6 +48,19 @@ func ChangeStateV1alpha1(ctx context.Context, awsClientPool *aws.ClientPool, gcp
 				if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
 					http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
 					return
+				}
+			}
+		case constants.PROVIDER_AZURE:
+			if azureClientPool != nil {
+				azClient, ok := azureClientPool.GetForCredential(m.CredentialRef)
+				if !ok {
+					http.Error(w, fmt.Errorf("client not found for credential %v", m.CredentialRef).Error(),
+						http.StatusBadRequest)
+					return
+				}
+				compute := azClient.AVM()
+				if err := compute.ChangeStatus(ctx, m.Action, m.TagKey, m.TagValue); err != nil {
+					http.Error(w, pkgerrors.Wrap(err, "change compute status").Error(), http.StatusInternalServerError)
 				}
 			}
 		case constants.PROVIDER_GCP:
