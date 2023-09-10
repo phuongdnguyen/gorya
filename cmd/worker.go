@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/os"
 	queueOptions "github.com/nduyphuong/gorya/internal/queue/options"
 	"github.com/nduyphuong/gorya/internal/types"
@@ -30,13 +31,13 @@ func newWorkCommand() *cobra.Command {
 			taskProcessResultChan := make(chan string)
 			taskProcessor := worker.NewClient(worker.Options{
 				QueueOpts: queueOptions.Options{
-					Addr:        os.GetEnv("GORYA_REDIS_ADDR", "localhost:6379"),
-					Name:        os.GetEnv("GORYA_QUEUE_NAME", "gorya"),
+					Addr:        os.GetEnv(constants.ENV_GORYA_REDIS_ADDR, "localhost:6379"),
+					Name:        os.GetEnv(constants.ENV_GORYA_QUEUE_NAME, "gorya"),
 					PopInterval: 2 * time.Second,
 				},
 			})
 
-			numWorkers := types.MustParseInt(os.GetEnv("GORYA_NUM_WORKER", "1"))
+			numWorkers := types.MustParseInt(os.GetEnv(constants.ENV_GORYA_NUM_WORKER, "1"))
 			for i := 0; i < numWorkers; i++ {
 				go taskProcessor.Process(ctx, ctx.Done(), errCh)
 			}
@@ -54,7 +55,7 @@ func newWorkCommand() *cobra.Command {
 					CredentialRef: elem.CredentialRef,
 					Provider:      elem.Project,
 				}
-				requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
+				requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv(constants.ENV_GORYA_API_PORT,
 					"8080")), v1alpha1.GoryaTaskChangeStageProcedure)
 				b, err := json.Marshal(changeStateRequest)
 				if err != nil {

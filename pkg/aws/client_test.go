@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/os"
 	awsOptions "github.com/nduyphuong/gorya/pkg/aws/options"
 	"github.com/stretchr/testify/assert"
@@ -11,8 +12,8 @@ import (
 
 func TestSmoke(t *testing.T) {
 	ctx := context.TODO()
-	awsRegion := os.GetEnv("AWS_REGION", "ap-southeast-1")
-	awsEndpoint := os.GetEnv("AWS_ENDPOINT", "")
+	awsRegion := os.GetEnv(constants.ENV_AWS_REGION, "ap-southeast-1")
+	awsEndpoint := os.GetEnv(constants.ENV_AWS_ENDPOINT, "")
 	c, err := new(ctx,
 		awsOptions.WithRegion(awsRegion),
 		awsOptions.WithEndpoint(awsEndpoint),

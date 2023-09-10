@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/nduyphuong/gorya/internal/constants"
 	"github.com/nduyphuong/gorya/internal/logging"
 	"github.com/nduyphuong/gorya/internal/os"
 	"github.com/nduyphuong/gorya/internal/queue"
@@ -89,7 +90,7 @@ func (c *client) Process(ctx context.Context, stop <-chan struct{}, errChan chan
 				CredentialRef: elem.CredentialRef,
 				Provider:      elem.Provider,
 			}
-			requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv("PORT",
+			requestURL := fmt.Sprintf("http://localhost:%d%s", types.MustParseInt(os.GetEnv(constants.ENV_GORYA_API_PORT,
 				"8080")), v1alpha1.GoryaTaskChangeStageProcedure)
 			b, err := json.Marshal(changeStateRequest)
 			if err != nil {

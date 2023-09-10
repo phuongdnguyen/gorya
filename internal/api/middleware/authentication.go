@@ -3,10 +3,12 @@ package middleware
 import (
 	"context"
 	"crypto/tls"
-	"github.com/coreos/go-oidc"
-	"github.com/nduyphuong/gorya/internal/os"
 	"net/http"
 	"time"
+
+	"github.com/coreos/go-oidc"
+	"github.com/nduyphuong/gorya/internal/constants"
+	"github.com/nduyphuong/gorya/internal/os"
 )
 
 // Claims claims component of jwt contains many fields , we need only roles of GoryaServiceClient
@@ -25,8 +27,8 @@ type clientRoles struct {
 }
 
 var (
-	issuerUrl        = os.GetEnv("GORYA_OIDC_ISSUER_URL", "http://localhost:8080/auth/realms/demorealm")
-	clientID  string = os.GetEnv("GORYA_OIDC_CLIENT_ID",
+	issuerUrl        = os.GetEnv(constants.ENV_GORYA_OIDC_ISSUER_URL, "http://localhost:8080/auth/realms/demorealm")
+	clientID  string = os.GetEnv(constants.ENV_GORYA_OIDC_CLIENT_ID,
 		"GoryaServiceClient")
 )
 

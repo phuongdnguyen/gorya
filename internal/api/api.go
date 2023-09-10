@@ -2,14 +2,15 @@ package api
 
 import (
 	"context"
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
-	"github.com/nduyphuong/gorya/pkg/azure"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armsubscriptions"
+	"github.com/nduyphuong/gorya/pkg/azure"
 
 	"github.com/nduyphuong/gorya/internal/api/config"
 	"github.com/nduyphuong/gorya/internal/api/handler"
@@ -73,7 +74,7 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 			constants.Default: true,
 		},
 	}
-	providers := strings.Split(os.GetEnv("GORYA_ENABLED_PROVIDERS", ""), ",")
+	providers := strings.Split(os.GetEnv(constants.ENV_GORYA_ENABLED_PROVIDERS, ""), ",")
 	ticker := time.NewTicker(30 * time.Second)
 	for _, provider := range providers {
 		provider = strings.ToLower(provider)
@@ -99,8 +100,8 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 					ctx,
 					c.credentialRef,
 					//currently we only support multi account in 1 region
-					awsOptions.WithRegion(os.GetEnv("AWS_REGION", "ap-southeast-1")),
-					awsOptions.WithEndpoint(os.GetEnv("AWS_ENDPOINT", "")),
+					awsOptions.WithRegion(os.GetEnv(constants.ENV_AWS_REGION, "ap-southeast-1")),
+					awsOptions.WithEndpoint(os.GetEnv(constants.ENV_AWS_ENDPOINT, "")),
 				)
 				if err != nil {
 					log.Errorf("update aws client pool %v", err)
@@ -210,8 +211,8 @@ func (s *server) Serve(ctx context.Context, l net.Listener) error {
 
 	s.taskProcessor = worker.NewClient(worker.Options{
 		QueueOpts: queueOptions.Options{
-			Addr:        os.GetEnv("GORYA_REDIS_ADDR", "localhost:6379"),
-			Name:        os.GetEnv("GORYA_QUEUE_NAME", "gorya"),
+			Addr:        os.GetEnv(constants.ENV_GORYA_REDIS_ADDR, "localhost:6379"),
+			Name:        os.GetEnv(constants.ENV_GORYA_QUEUE_NAME, "gorya"),
 			PopInterval: 2 * time.Second,
 		},
 	})
