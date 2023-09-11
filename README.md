@@ -7,7 +7,7 @@ Scheduler for compute instances across clouds. A Golang port of [Doiintl's Zorya
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://raw.githubusercontent.com/nduyphuong/gorya/dev/LICENSE)
 [![Build status](https://github.com/nduyphuong/gorya/actions/workflows/release.yml/badge.svg)](https://github.com/nduyphuong/gorya/actions)
 
-# Support Resources
+# Supported Resources
 - AWS:
  - [X] EC2
  - [X] RDS
