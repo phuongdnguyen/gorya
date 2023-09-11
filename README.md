@@ -16,6 +16,9 @@ Scheduler for compute instances across clouds. A Golang port of [Doiintl's Zorya
  - [X] EC2
  - [X] CLOUDSQL
  - [ ] GKE
+- AZURE:
+ - [X] AZURE VIRTUAL MACHINE
+  
 ## Building Gorya
 
 ### Software requirements
